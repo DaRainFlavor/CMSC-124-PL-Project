@@ -33,6 +33,8 @@ class CodeWindow(tk.Frame):
     save_button = tk.Button(frame, text="Save", command=self.save_file)
     open_button = tk.Button(frame, text="Open", command=self.open_file)
     new_button = tk.Button(frame, text="New", command=self.new_file)
+    undo_button = tk.Button(frame, text="Undo")
+    redo_button = tk.Button(frame, text="Redo")
     run_button = tk.Button(frame, text="Run")
 
     # Sticky fills the contents in directions: northsouth, eastwest
@@ -40,7 +42,14 @@ class CodeWindow(tk.Frame):
     save_button.grid(row=0, column=1, padx=5, pady=5, sticky="ns")
     open_button.grid(row=0, column=2, padx=5, pady=5, sticky="ns")
     new_button.grid(row=0, column=3, padx=5, pady=5, sticky="ns")
-    run_button.grid(row=0, column=4, padx=5, pady=5, sticky="ns")
+
+    # Create an empty column that will expand
+    frame.grid_columnconfigure(4, weight=1)
+
+    # Place the Run button on the far right
+    undo_button.grid(row=0, column=5, padx=5, pady=5, sticky="ns")
+    redo_button.grid(row=0, column=6, padx=5, pady=5, sticky="ns")
+    run_button.grid(row=0, column=7, padx=5, pady=5, sticky="ns")
     frame.grid(row=0, column=0, sticky="ew", columnspan=2)
 
     self.pack(expand=True, fill=tk.BOTH) # maintain this to totally overlap the previous window
