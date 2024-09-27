@@ -2,6 +2,8 @@ import tkinter as tk
 from tkinter.filedialog import askopenfilename, asksaveasfilename
 import tkinter.messagebox as msgbox
 import os
+import customtkinter 
+from PIL import ImageTk, Image 
 
 class CodeWindow(tk.Frame):
   def __init__(self, parent, main):
@@ -29,14 +31,24 @@ class CodeWindow(tk.Frame):
     self.text_edit.config(yscrollcommand=scroll_bar.set)
 
     frame = tk.Frame(self, relief=tk.RAISED, bd=2)
-    save_as_button = tk.Button(frame, text="Save As", command=self.save_as_file)
-    save_button = tk.Button(frame, text="Save", command=self.save_file)
-    open_button = tk.Button(frame, text="Open", command=self.open_file)
-    new_button = tk.Button(frame, text="New", command=self.new_file)
-    undo_button = tk.Button(frame, text="Undo")
-    redo_button = tk.Button(frame, text="Redo")
-    run_button = tk.Button(frame, text="Run")
+    
+    save_as_image = ImageTk.PhotoImage(Image.open("save_as_image.png").resize((40, 40)))
+    save_image = ImageTk.PhotoImage(Image.open("save_image.png").resize((40, 40)))
+    open_image = ImageTk.PhotoImage(Image.open("open_image.png").resize((40, 40)))
+    new_image = ImageTk.PhotoImage(Image.open("new_image.png").resize((40, 40)))
+    undo_image = ImageTk.PhotoImage(Image.open("undo_image.png").resize((40, 40)))
+    redo_image = ImageTk.PhotoImage(Image.open("redo_image.png").resize((40, 40)))
+    run_image = ImageTk.PhotoImage(Image.open("run_image.png").resize((40, 40)))
 
+    # Create image buttons
+    save_as_button = customtkinter.CTkButton(frame, image=save_as_image, text="", command=self.save_as_file, corner_radius=32, fg_color="White")
+    save_button = customtkinter.CTkButton(frame, image=save_image, text="", command=self.save_file, corner_radius=32, fg_color="White")
+    open_button = customtkinter.CTkButton(frame, image=open_image, text="", command=self.open_file, corner_radius=32, fg_color="White")
+    new_button = customtkinter.CTkButton(frame, image=new_image, text="", command=self.new_file, corner_radius=32, fg_color="White")
+    undo_button = customtkinter.CTkButton(frame, image=undo_image, text="", command=self.undo, corner_radius=32, fg_color="White")
+    redo_button = customtkinter.CTkButton(frame, image=redo_image, text="", command=self.redo, corner_radius=32, fg_color="White")
+    run_button = customtkinter.CTkButton(frame, image=run_image, text="", command=self.run, corner_radius=32, fg_color="White")
+    
     # Sticky fills the contents in directions: northsouth, eastwest
     save_as_button.grid(row=0, column=0, padx=5, pady=5, sticky="ns")
     save_button.grid(row=0, column=1, padx=5, pady=5, sticky="ns")
@@ -115,6 +127,26 @@ class CodeWindow(tk.Frame):
         return
       elif response:  # Yes, save changes
         self.save_file()
+        
+  def undo(self):
+    try:
+        self.text_edit.edit_undo()
+    except tk.TclError:  # This handles when there's nothing to undo
+        pass
+
+  def redo(self):
+    try:
+        self.text_edit.edit_redo()
+    except tk.TclError:  # This handles when there's nothing to redo
+        pass
+
+  def run(self):
+    code = self.text_edit.get("1.0", tk.END).strip()  # Get the code from the text widget
+    try:
+        exec(code)  # Run the code in the text editor (Python code)
+    except Exception as e:
+        msgbox.showerror("Error", f"An error occurred while running the code:\n{e}")
+
 
     # Open the save file dialog with a default filename
     path = asksaveasfilename(
