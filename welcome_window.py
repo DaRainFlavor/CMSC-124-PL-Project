@@ -1,7 +1,9 @@
 import tkinter as tk
 from tkinter.filedialog import askopenfilename, asksaveasfilename
+from tkinter.tix import *
 import customtkinter 
-from PIL import ImageTk, Image 
+from PIL import ImageTk, Image
+from tooltip import ToolTip
 
 class WelcomeWindow(tk.Frame):
     def __init__(self, parent, main):
@@ -17,8 +19,8 @@ class WelcomeWindow(tk.Frame):
         frame = tk.Frame(self, relief=tk.RAISED, bd=2)
 
         # Load the images
-        open_image = ImageTk.PhotoImage(Image.open("open_image.png").resize((40, 40)))  # Replace with actual image paths
-        new_image = ImageTk.PhotoImage(Image.open("new_image.png").resize((40, 40)))
+        open_image = customtkinter.CTkImage(light_image=Image.open("open_image.png").resize((40, 40)))
+        new_image = customtkinter.CTkImage(light_image=Image.open("new_image.png").resize((40, 40)))
 
         # Create image buttons
         open_button = customtkinter.CTkButton(frame, image=open_image, text="", command=self.open_file, corner_radius=32, fg_color="White")
@@ -28,6 +30,10 @@ class WelcomeWindow(tk.Frame):
         open_button.grid(row=0, column=0, padx=5, pady=5, sticky="ns")
         new_button.grid(row=0, column=1, padx=5, pady=5, sticky="ns")
         frame.grid(row=0, column=0, sticky="ew", columnspan=2)
+
+        # Apply tooltips to the buttons
+        ToolTip(open_button, "Open")
+        ToolTip(new_button, "New")
 
         welcome_message = "Welcome to Compiley Studio!"
         welcome_label = tk.Label(self, text=welcome_message, fg="Black", bg="White", font=("Arial", 40))

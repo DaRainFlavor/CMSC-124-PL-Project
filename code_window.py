@@ -4,6 +4,7 @@ import tkinter.messagebox as msgbox
 import os
 import customtkinter 
 from PIL import ImageTk, Image 
+from tooltip import ToolTip
 
 class CodeWindow(tk.Frame):
   def __init__(self, parent, main):
@@ -32,13 +33,14 @@ class CodeWindow(tk.Frame):
 
     frame = tk.Frame(self, relief=tk.RAISED, bd=2)
     
-    save_as_image = ImageTk.PhotoImage(Image.open("save_as_image.png").resize((40, 40)))
-    save_image = ImageTk.PhotoImage(Image.open("save_image.png").resize((40, 40)))
-    open_image = ImageTk.PhotoImage(Image.open("open_image.png").resize((40, 40)))
-    new_image = ImageTk.PhotoImage(Image.open("new_image.png").resize((40, 40)))
-    undo_image = ImageTk.PhotoImage(Image.open("undo_image.png").resize((40, 40)))
-    redo_image = ImageTk.PhotoImage(Image.open("redo_image.png").resize((40, 40)))
-    run_image = ImageTk.PhotoImage(Image.open("run_image.png").resize((40, 40)))
+    save_as_image = customtkinter.CTkImage(Image.open("save_as_image.png").resize((40, 40)))
+    save_image = customtkinter.CTkImage(Image.open("save_image.png").resize((40, 40)))
+    open_image = customtkinter.CTkImage(Image.open("open_image.png").resize((40, 40)))
+    new_image = customtkinter.CTkImage(Image.open("new_image.png").resize((40, 40)))
+    undo_image = customtkinter.CTkImage(Image.open("undo_image.png").resize((40, 40)))
+    redo_image = customtkinter.CTkImage(Image.open("redo_image.png").resize((40, 40)))
+    run_image = customtkinter.CTkImage(Image.open("run_image.png").resize((40, 40)))
+
 
     # Create image buttons
     save_as_button = customtkinter.CTkButton(frame, image=save_as_image, text="", command=self.save_as_file, corner_radius=32, fg_color="White")
@@ -54,6 +56,16 @@ class CodeWindow(tk.Frame):
     save_button.grid(row=0, column=1, padx=5, pady=5, sticky="ns")
     open_button.grid(row=0, column=2, padx=5, pady=5, sticky="ns")
     new_button.grid(row=0, column=3, padx=5, pady=5, sticky="ns")
+
+
+    # Apply tooltips to the buttons
+    ToolTip(save_as_button, "Save As")
+    ToolTip(save_button, "Save")
+    ToolTip(open_button, "Open")
+    ToolTip(new_button, "New")
+    ToolTip(undo_button, "Undo")
+    ToolTip(redo_button, "Redo")
+    ToolTip(run_button, "Run")
 
     # Create an empty column that will expand
     frame.grid_columnconfigure(4, weight=1)
