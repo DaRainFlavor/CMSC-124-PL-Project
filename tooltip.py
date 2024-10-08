@@ -5,9 +5,17 @@ class ToolTip:
         self.widget = widget
         self.text = text
         self.tooltip_window = None
-        widget.bind("<Enter>", self.show_tooltip)
+        self.tooltip_timer = None  # Timer variable
+        # Bind <Enter> to schedule_tooltip and <Leave> to hide_tooltip
+        widget.bind("<Enter>", self.schedule_tooltip)
         widget.bind("<Leave>", self.hide_tooltip)
-
+    
+    def schedule_tooltip(self, event):
+        if self.tooltip_window or not self.text:
+            return
+        # Schedule the show_tooltip method to run after 1000 milliseconds (1 second)
+        self.tooltip_timer = self.widget.after(1000, self.show_tooltip, event)
+    
     def show_tooltip(self, event):
         if self.tooltip_window or not self.text:
             return
@@ -31,4 +39,7 @@ class ToolTip:
     def hide_tooltip(self, event):
         if self.tooltip_window:
             self.tooltip_window.destroy()
+        if self.tooltip_timer:  # Cancel the tooltip timer if it exists
+            self.widget.after_cancel(self.tooltip_timer)
+            self.tooltip_timer = None
         self.tooltip_window = None

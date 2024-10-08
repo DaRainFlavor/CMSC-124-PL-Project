@@ -10,8 +10,6 @@ class WelcomeWindow(tk.Frame):
         super().__init__(parent, bg="white")
         self.main = main
 
-        
-
         # Configure the column and row for resizing
         self.rowconfigure(1, weight=1)
         self.columnconfigure(0, weight=1)
@@ -35,10 +33,22 @@ class WelcomeWindow(tk.Frame):
         ToolTip(open_button, "Open")
         ToolTip(new_button, "New")
 
-        welcome_message = "Welcome to Compiley Studio!"
-        welcome_label = tk.Label(self, text=welcome_message, fg="Black", bg="White", font=("Arial", 40))
-        welcome_label.grid(row=1, column=0, columnspan=2, pady=(0, 10), sticky='nsew')
+        frame2 = tk.Frame(self, relief=tk.RAISED, background="white")
+        frame2.columnconfigure(0, weight=1)  # Allow column to expand
+        frame2.rowconfigure(0, weight=1)      # Allow row for welcome label to expand
+        frame2.rowconfigure(1, weight=1)      # Allow row for introduction label to expand
 
+        welcome_message = "Welcome to Compiley Studio!"
+        welcome_label = tk.Label(frame2, text=welcome_message, fg="Black", bg="White", font=("Arial", 40))
+        welcome_label.grid(row=0, column=0, columnspan=2, pady=(0, 10))
+
+        # Introduction text
+        introduction_message = "Hello brainers! Meet the developers:\nAdrian Vaflor\nKimberly Padilla\nLeian Carl Dela Cruz\n\nHappy Compiling!"
+        introduction_label = tk.Label(frame2, text=introduction_message, fg="Black", bg="White", font=("Arial", 16))
+        introduction_label.grid(row=1, column=0, columnspan=2, pady=(5, 0))
+
+        frame2.grid(row=1, column=0, sticky="ew", columnspan=2)
+        
         self.pack(expand=True, fill=tk.BOTH)  # maintain this to totally overlap the previous window
 
         # Bind keyboard shortcuts using lambda functions

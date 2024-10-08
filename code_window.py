@@ -5,6 +5,7 @@ import os
 import customtkinter 
 from PIL import ImageTk, Image 
 from tooltip import ToolTip
+import subprocess
 
 class CodeWindow(tk.Frame):
   def __init__(self, parent, main):
@@ -44,35 +45,35 @@ class CodeWindow(tk.Frame):
 
     # Create image buttons
     save_as_button = customtkinter.CTkButton(frame, image=save_as_image, text="", command=self.save_as_file, corner_radius=32, fg_color="White")
-    save_button = customtkinter.CTkButton(frame, image=save_image, text="", command=self.save_file, corner_radius=32, fg_color="White")
+    self.save_button = customtkinter.CTkButton(frame, image=save_image, text="", command=self.save_file, corner_radius=32, fg_color="White")
     open_button = customtkinter.CTkButton(frame, image=open_image, text="", command=self.open_file, corner_radius=32, fg_color="White")
     new_button = customtkinter.CTkButton(frame, image=new_image, text="", command=self.new_file, corner_radius=32, fg_color="White")
-    undo_button = customtkinter.CTkButton(frame, image=undo_image, text="", command=self.undo, corner_radius=32, fg_color="White")
-    redo_button = customtkinter.CTkButton(frame, image=redo_image, text="", command=self.redo, corner_radius=32, fg_color="White")
+    self.undo_button = customtkinter.CTkButton(frame, image=undo_image, text="", command=self.undo, corner_radius=32, fg_color="White")
+    self.redo_button = customtkinter.CTkButton(frame, image=redo_image, text="", command=self.redo, corner_radius=32, fg_color="White")
     run_button = customtkinter.CTkButton(frame, image=run_image, text="", command=self.run, corner_radius=32, fg_color="White")
     
     # Sticky fills the contents in directions: northsouth, eastwest
     save_as_button.grid(row=0, column=0, padx=5, pady=5, sticky="ns")
-    save_button.grid(row=0, column=1, padx=5, pady=5, sticky="ns")
+    self.save_button.grid(row=0, column=1, padx=5, pady=5, sticky="ns")
     open_button.grid(row=0, column=2, padx=5, pady=5, sticky="ns")
     new_button.grid(row=0, column=3, padx=5, pady=5, sticky="ns")
 
 
     # Apply tooltips to the buttons
     ToolTip(save_as_button, "Save As")
-    ToolTip(save_button, "Save")
+    ToolTip(self.save_button, "Save")
     ToolTip(open_button, "Open")
     ToolTip(new_button, "New")
-    ToolTip(undo_button, "Undo")
-    ToolTip(redo_button, "Redo")
+    ToolTip(self.undo_button, "Undo")
+    ToolTip(self.redo_button, "Redo")
     ToolTip(run_button, "Run")
 
     # Create an empty column that will expand
     frame.grid_columnconfigure(4, weight=1)
 
     # Place the Run button on the far right
-    undo_button.grid(row=0, column=5, padx=5, pady=5, sticky="ns")
-    redo_button.grid(row=0, column=6, padx=5, pady=5, sticky="ns")
+    self.undo_button.grid(row=0, column=5, padx=5, pady=5, sticky="ns")
+    self.redo_button.grid(row=0, column=6, padx=5, pady=5, sticky="ns")
     run_button.grid(row=0, column=7, padx=5, pady=5, sticky="ns")
     frame.grid(row=0, column=0, sticky="ew", columnspan=2)
 
@@ -88,8 +89,20 @@ class CodeWindow(tk.Frame):
     self.main.master.bind_all("<Control-z>", lambda event: self.text_edit.edit_undo())
     self.main.master.bind_all("<Control-y>", lambda event: self.text_edit.edit_redo())
     
+    # Bind events for detecting changes in text
+    self.text_edit.bind("<KeyRelease>", self.on_text_change)
+
     # Bind window close event
     self.main.master.protocol("WM_DELETE_WINDOW", self.on_closing)
+
+  def on_text_change(self, event=None):
+    # Enable or disable the save button based on content change
+    # print(f"{self.text_edit.get(1.0, tk.END).strip()}, {self.default_text}")
+    if self.text_edit.get(1.0, tk.END).strip() != self.default_text:
+      self.save_button.configure(state=tk.NORMAL, fg_color="white")
+    else:
+      self.save_button.configure(state=tk.DISABLED, fg_color="#DDDCDD")
+
   def save_as_file(self):
     path = asksaveasfilename(defaultextension=".rot", filetypes=[("Brain Rot Files", "*.rot")])
     if not path: return
@@ -102,7 +115,9 @@ class CodeWindow(tk.Frame):
     with open(self.filepath, "w") as f:
       f.write(content)
     self.default_text = content
+    self.save_button.configure(state=tk.DISABLED, fg_color="#DDDCDD")
     self.main.master.title(f"{os.path.basename(self.filepath)} - Compiley Studio")
+    
 
   def open_file(self):
     if self.default_text != self.text_edit.get(1.0, tk.END).strip():
@@ -153,36 +168,24 @@ class CodeWindow(tk.Frame):
         pass
 
   def run(self):
+    mars_path = "Mars4_5.jar"
     code = self.text_edit.get("1.0", tk.END).strip()  # Get the code from the text widget
+    # Save the MIPS assembly code to a file
+    assembly_file_name = f"{os.path.basename(self.filepath)}.s"
+    with open(assembly_file_name, 'w') as f:
+      f.write(code)
     try:
-        exec(code)  # Run the code in the text editor (Python code)
+      result = subprocess.run(
+        ['java', '-jar', mars_path, assembly_file_name],  # Use the mars_path variable
+        capture_output=True,
+        text=True
+      )
+      
+      # Display the output from MARS
+      print("MIPS Program Output:")
+      print(result.stdout)
     except Exception as e:
-        msgbox.showerror("Error", f"An error occurred while running the code:\n{e}")
-
-
-    # Open the save file dialog with a default filename
-    path = asksaveasfilename(
-      defaultextension=".rot",  # Set .rot as the default extension
-      filetypes=[("BrainRot File", "*.rot")],  # Only show .rot files
-      initialfile="new_file.rot"  # Default filename
-    )
-    
-    # If the user cancels the dialog, path will be an empty string
-    if not path:
-      return
-    
-    self.filepath = path
-    # Create a blank file at the specified path
-    with open(self.filepath, "w") as f:
-      pass  # Just create an empty file
-
-    self.default_text = ""
-    self.text_edit.delete(1.0, tk.END)
-    self.text_edit.insert(tk.END, self.default_text)
-    # Set cursor to the end of the default content
-    self.text_edit.mark_set(tk.INSERT, tk.END)
-    self.text_edit.see(tk.END)
-    self.main.master.title(f"{os.path.basename(self.filepath)} - Compiley Studio")
+      print("MARS is not installed or not found in your system's PATH.")
 
   def restore_down(self):
     self.main.master.geometry("400x400")
@@ -205,5 +208,7 @@ class CodeWindow(tk.Frame):
     self.main.master.state('zoomed')
     self.main.master.after(1000, self.restore_down)
     self.main.master.resizable(True, True)
+    self.save_button.configure(state=tk.DISABLED, fg_color="#DDDCDD")
     self.pack(expand=True, fill=tk.BOTH) # maintain this to totally overlap the previous window
     self.main.master.title(f"{os.path.basename(self.filepath)} - Compiley Studio")
+    
