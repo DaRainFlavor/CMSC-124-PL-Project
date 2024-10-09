@@ -11,17 +11,25 @@ class FlashWindow(tk.Frame): # Frame 1
     self.parent = parent
     self.main = main
 
+    image_frame = tk.Frame(self, bg="black")
+    img = Image.open("logo.jpg")
+    image_frame.pack(fill="both", expand=True)
+
     # Open the image and resize it first
     img = Image.open("logo.jpg")
     resized_img = self.resize_image(img, 500, 300)
 
-    # Now convert the resized image to PhotoImage
     my_img = ImageTk.PhotoImage(resized_img)
 
     # Create and pack the label
-    my_label = tk.Label(self, image=my_img, bg="white") 
+    my_label = tk.Label(image_frame, image=my_img, bg="white") 
     my_label.image = my_img  # Keep a reference to avoid garbage collection
-    my_label.pack()
+    my_label.pack(fill="both", expand=True)
+
+    # Introduction text
+    introduction_message = "A BrainRot compiler developed by Adrian Vaflor, Kimberly Padilla, and Leian Carl Dela Cruz"
+    introduction_label = tk.Label(self, text=introduction_message, fg="Black", bg="White", font=("Arial", 8))
+    introduction_label.pack()
 
   def resize_image(self, img, max_width, max_height):
     width, height = img.size
@@ -46,7 +54,7 @@ class FlashWindow(tk.Frame): # Frame 1
     
     # Set the size of the window
     window_width = 500
-    window_height = 300
+    window_height = 380
 
     screen_width = self.main.master.winfo_screenwidth()
     screen_height = self.main.master.winfo_screenheight()

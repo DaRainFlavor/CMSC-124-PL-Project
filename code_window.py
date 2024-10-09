@@ -18,7 +18,8 @@ class CodeWindow(tk.Frame):
     self.columnconfigure(0, weight=1)
 
     self.default_text = ""
-    self.text_edit = tk.Text(self, font="Helvetica 11", wrap="word", undo = True)
+    self.font_size = 11
+    self.text_edit = tk.Text(self, font=("Helvetica", self.font_size), wrap="word", undo = True)
     self.text_edit.insert("1.0", self.default_text)
     self.text_edit.grid(row=1, column=0, sticky="nsew")
     # Set cursor to the end of the default text
@@ -91,6 +92,10 @@ class CodeWindow(tk.Frame):
     
     # Bind events for detecting changes in text
     self.text_edit.bind("<KeyRelease>", self.on_text_change)
+
+    # Bind zoom in/out keyboard shortcuts
+    self.main.master.bind_all("<Control-equal>", lambda event: self.zoom_in())
+    self.main.master.bind_all("<Control-minus>", lambda event: self.zoom_out())
 
     # Bind window close event
     self.main.master.protocol("WM_DELETE_WINDOW", self.on_closing)
@@ -168,6 +173,7 @@ class CodeWindow(tk.Frame):
         pass
 
   def run(self):
+    self.save_file()
     mars_path = "Mars4_5.jar"
     code = self.text_edit.get("1.0", tk.END).strip()  # Get the code from the text widget
     # Save the MIPS assembly code to a file
@@ -187,8 +193,18 @@ class CodeWindow(tk.Frame):
     except Exception as e:
       print("MARS is not installed or not found in your system's PATH.")
 
+  def zoom_in(self):
+    if self.font_size < 200:
+      self.font_size += 1
+      self.text_edit.config(font=("Helvetica", self.font_size))
+
+  def zoom_out(self):
+    if self.font_size > 8:
+      self.font_size -= 1
+      self.text_edit.config(font=("Helvetica", self.font_size))
+
   def restore_down(self):
-    self.main.master.geometry("400x400")
+    self.main.master.geometry("1055x400")
 
   def on_closing(self):
     # Check if there are unsaved changes

@@ -16,22 +16,48 @@ class WelcomeWindow(tk.Frame):
 
         frame = tk.Frame(self, relief=tk.RAISED, bd=2)
 
-        # Load the images
-        open_image = customtkinter.CTkImage(light_image=Image.open("open_image.png").resize((40, 40)))
-        new_image = customtkinter.CTkImage(light_image=Image.open("new_image.png").resize((40, 40)))
+        save_as_image = customtkinter.CTkImage(Image.open("save_as_image.png").resize((40, 40)))
+        save_image = customtkinter.CTkImage(Image.open("save_image.png").resize((40, 40)))
+        open_image = customtkinter.CTkImage(Image.open("open_image.png").resize((40, 40)))
+        new_image = customtkinter.CTkImage(Image.open("new_image.png").resize((40, 40)))
+        undo_image = customtkinter.CTkImage(Image.open("undo_image.png").resize((40, 40)))
+        redo_image = customtkinter.CTkImage(Image.open("redo_image.png").resize((40, 40)))
+        run_image = customtkinter.CTkImage(Image.open("run_image.png").resize((40, 40)))
+
 
         # Create image buttons
+        save_as_button = customtkinter.CTkButton(frame, image=save_as_image, text="", corner_radius=32, fg_color="#DDDCDD", state=tk.DISABLED)
+        self.save_button = customtkinter.CTkButton(frame, image=save_image, text="", corner_radius=32, fg_color="#DDDCDD", state=tk.DISABLED)
         open_button = customtkinter.CTkButton(frame, image=open_image, text="", command=self.open_file, corner_radius=32, fg_color="White")
         new_button = customtkinter.CTkButton(frame, image=new_image, text="", command=self.new_file, corner_radius=32, fg_color="White")
+        self.undo_button = customtkinter.CTkButton(frame, image=undo_image, text="", corner_radius=32, fg_color="#DDDCDD", state=tk.DISABLED)
+        self.redo_button = customtkinter.CTkButton(frame, image=redo_image, text="", corner_radius=32, fg_color="#DDDCDD", state=tk.DISABLED)
+        run_button = customtkinter.CTkButton(frame, image=run_image, text="", corner_radius=32, fg_color="#DDDCDD", state=tk.DISABLED)
 
         # Sticky fills the contents in directions: northsouth, eastwest
-        open_button.grid(row=0, column=0, padx=5, pady=5, sticky="ns")
-        new_button.grid(row=0, column=1, padx=5, pady=5, sticky="ns")
-        frame.grid(row=0, column=0, sticky="ew", columnspan=2)
+        save_as_button.grid(row=0, column=0, padx=5, pady=5, sticky="ns")
+        self.save_button.grid(row=0, column=1, padx=5, pady=5, sticky="ns")
+        open_button.grid(row=0, column=2, padx=5, pady=5, sticky="ns")
+        new_button.grid(row=0, column=3, padx=5, pady=5, sticky="ns")
+
 
         # Apply tooltips to the buttons
+        ToolTip(save_as_button, "Save As")
+        ToolTip(self.save_button, "Save")
         ToolTip(open_button, "Open")
         ToolTip(new_button, "New")
+        ToolTip(self.undo_button, "Undo")
+        ToolTip(self.redo_button, "Redo")
+        ToolTip(run_button, "Run")
+
+        # Create an empty column that will expand
+        frame.grid_columnconfigure(4, weight=1)
+
+        # Place the Run button on the far right
+        self.undo_button.grid(row=0, column=5, padx=5, pady=5, sticky="ns")
+        self.redo_button.grid(row=0, column=6, padx=5, pady=5, sticky="ns")
+        run_button.grid(row=0, column=7, padx=5, pady=5, sticky="ns")
+        frame.grid(row=0, column=0, sticky="ew", columnspan=2)
 
         frame2 = tk.Frame(self, relief=tk.RAISED, background="white")
         frame2.columnconfigure(0, weight=1)  # Allow column to expand
@@ -42,18 +68,15 @@ class WelcomeWindow(tk.Frame):
         welcome_label = tk.Label(frame2, text=welcome_message, fg="Black", bg="White", font=("Arial", 40))
         welcome_label.grid(row=0, column=0, columnspan=2, pady=(0, 10))
 
-        # Introduction text
-        introduction_message = "Hello brainers! Meet the developers:\nAdrian Vaflor\nKimberly Padilla\nLeian Carl Dela Cruz\n\nHappy Compiling!"
-        introduction_label = tk.Label(frame2, text=introduction_message, fg="Black", bg="White", font=("Arial", 16))
-        introduction_label.grid(row=1, column=0, columnspan=2, pady=(5, 0))
+        intro_message = "A compiler for BrainRot files."
+        intro_label = tk.Label(frame2, text=intro_message, fg="Black", bg="White", font=("Arial", 12))
+        intro_label.grid(row=1, column=0, columnspan=2, pady=(0, 10))
 
         frame2.grid(row=1, column=0, sticky="ew", columnspan=2)
         
         self.pack(expand=True, fill=tk.BOTH)  # maintain this to totally overlap the previous window
 
         # Bind keyboard shortcuts using lambda functions
-        self.main.master.bind_all("<Control-s>", lambda event: self.save_file())
-        self.main.master.bind_all("<Control-S>", lambda event: self.save_as_file())
         self.main.master.bind_all("<Control-o>", lambda event: self.open_file())
         self.main.master.bind_all("<Control-n>", lambda event: self.new_file())
 
@@ -97,7 +120,7 @@ class WelcomeWindow(tk.Frame):
         self.switchToNextWindow(path)
 
     def restore_down(self):
-        self.main.master.geometry("400x400")
+        self.main.master.geometry("1055x400")
 
     def show(self):
         self.main.master.state('zoomed')
