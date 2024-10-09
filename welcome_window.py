@@ -22,6 +22,8 @@ class WelcomeWindow(tk.Frame):
         new_image = customtkinter.CTkImage(Image.open("new_image.png").resize((40, 40)))
         undo_image = customtkinter.CTkImage(Image.open("undo_image.png").resize((40, 40)))
         redo_image = customtkinter.CTkImage(Image.open("redo_image.png").resize((40, 40)))
+        cut_image = customtkinter.CTkImage(Image.open("cut_image.png").resize((40, 40)))
+        paste_image = customtkinter.CTkImage(Image.open("paste_image.png").resize((40, 40)))
         run_image = customtkinter.CTkImage(Image.open("run_image.png").resize((40, 40)))
 
 
@@ -32,6 +34,8 @@ class WelcomeWindow(tk.Frame):
         new_button = customtkinter.CTkButton(frame, image=new_image, text="", command=self.new_file, corner_radius=32, fg_color="White")
         self.undo_button = customtkinter.CTkButton(frame, image=undo_image, text="", corner_radius=32, fg_color="#DDDCDD", state=tk.DISABLED)
         self.redo_button = customtkinter.CTkButton(frame, image=redo_image, text="", corner_radius=32, fg_color="#DDDCDD", state=tk.DISABLED)
+        self.cut_button = customtkinter.CTkButton(frame, image=cut_image, text="", corner_radius=32, fg_color="#DDDCDD", state=tk.DISABLED)
+        self.paste_button = customtkinter.CTkButton(frame, image=paste_image, text="", corner_radius=32, fg_color="#DDDCDD", state=tk.DISABLED)
         run_button = customtkinter.CTkButton(frame, image=run_image, text="", corner_radius=32, fg_color="#DDDCDD", state=tk.DISABLED)
 
         # Sticky fills the contents in directions: northsouth, eastwest
@@ -48,6 +52,8 @@ class WelcomeWindow(tk.Frame):
         ToolTip(new_button, "New")
         ToolTip(self.undo_button, "Undo")
         ToolTip(self.redo_button, "Redo")
+        ToolTip(self.cut_button, "Cut")
+        ToolTip(self.paste_button, "Paste")
         ToolTip(run_button, "Run")
 
         # Create an empty column that will expand
@@ -56,7 +62,9 @@ class WelcomeWindow(tk.Frame):
         # Place the Run button on the far right
         self.undo_button.grid(row=0, column=5, padx=5, pady=5, sticky="ns")
         self.redo_button.grid(row=0, column=6, padx=5, pady=5, sticky="ns")
-        run_button.grid(row=0, column=7, padx=5, pady=5, sticky="ns")
+        self.cut_button.grid(row=0, column=7, padx=5, pady=5, sticky="ns")
+        self.paste_button.grid(row=0, column=8, padx=5, pady=5, sticky="ns")
+        run_button.grid(row=0, column=9, padx=5, pady=5, sticky="ns")
         frame.grid(row=0, column=0, sticky="ew", columnspan=2)
 
         frame2 = tk.Frame(self, relief=tk.RAISED, background="white")
