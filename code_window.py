@@ -47,15 +47,15 @@ class CodeWindow(tk.Frame):
 
 
     # Create image buttons
-    save_as_button = customtkinter.CTkButton(frame, image=save_as_image, text="", command=self.save_as_file, corner_radius=32, fg_color="White")
-    self.save_button = customtkinter.CTkButton(frame, image=save_image, text="", command=self.save_file, corner_radius=32, fg_color="White")
-    open_button = customtkinter.CTkButton(frame, image=open_image, text="", command=self.open_file, corner_radius=32, fg_color="White")
-    new_button = customtkinter.CTkButton(frame, image=new_image, text="", command=self.new_file, corner_radius=32, fg_color="White")
-    self.undo_button = customtkinter.CTkButton(frame, image=undo_image, text="", command=self.undo, corner_radius=32, fg_color="White")
-    self.redo_button = customtkinter.CTkButton(frame, image=redo_image, text="", command=self.redo, corner_radius=32, fg_color="White")
-    self.cut_button = customtkinter.CTkButton(frame, image=cut_image, text="", command=self.cut, corner_radius=32, fg_color="White")
-    self.paste_button = customtkinter.CTkButton(frame, image=paste_image, text="", command=self.paste, corner_radius=32, fg_color="White")
-    run_button = customtkinter.CTkButton(frame, image=run_image, text="", command=self.run, corner_radius=32, fg_color="White")
+    save_as_button = customtkinter.CTkButton(frame, image=save_as_image, text="", command=self.save_as_file, corner_radius=32, fg_color="White", width = 45, height=45)
+    self.save_button = customtkinter.CTkButton(frame, image=save_image, text="", command=self.save_file, corner_radius=32, fg_color="White", width = 45, height=45)
+    open_button = customtkinter.CTkButton(frame, image=open_image, text="", command=self.open_file, corner_radius=32, fg_color="White", width = 45, height=45)
+    new_button = customtkinter.CTkButton(frame, image=new_image, text="", command=self.new_file, corner_radius=32, fg_color="White", width = 45, height=45)
+    self.undo_button = customtkinter.CTkButton(frame, image=undo_image, text="", command=self.undo, corner_radius=32, fg_color="White", width = 45, height=45)
+    self.redo_button = customtkinter.CTkButton(frame, image=redo_image, text="", command=self.redo, corner_radius=32, fg_color="White", width = 45, height=45)
+    self.cut_button = customtkinter.CTkButton(frame, image=cut_image, text="", command=self.cut, corner_radius=32, fg_color="White", width = 45, height=45)
+    self.paste_button = customtkinter.CTkButton(frame, image=paste_image, text="", command=self.paste, corner_radius=32, fg_color="White", width = 45, height=45)
+    run_button = customtkinter.CTkButton(frame, image=run_image, text="", command=self.run, corner_radius=32, fg_color="White", width = 45, height=45)
     
     # Sticky fills the contents in directions: northsouth, eastwest
     save_as_button.grid(row=0, column=0, padx=5, pady=5, sticky="ns")
@@ -287,7 +287,7 @@ class CodeWindow(tk.Frame):
     self.main.master.resizable(True, True)
     self.save_button.configure(state=tk.DISABLED, fg_color="#DDDCDD")
     self.update_cut_button()
-    self.update_paste_button()
+    # self.update_paste_button()
     self.pack(expand=True, fill=tk.BOTH) # maintain this to totally overlap the previous window
     self.main.master.title(f"{os.path.basename(self.filepath)} - Compiley Studio")
     

@@ -28,15 +28,15 @@ class WelcomeWindow(tk.Frame):
 
 
         # Create image buttons
-        save_as_button = customtkinter.CTkButton(frame, image=save_as_image, text="", corner_radius=32, fg_color="#DDDCDD", state=tk.DISABLED)
-        self.save_button = customtkinter.CTkButton(frame, image=save_image, text="", corner_radius=32, fg_color="#DDDCDD", state=tk.DISABLED)
-        open_button = customtkinter.CTkButton(frame, image=open_image, text="", command=self.open_file, corner_radius=32, fg_color="White")
-        new_button = customtkinter.CTkButton(frame, image=new_image, text="", command=self.new_file, corner_radius=32, fg_color="White")
-        self.undo_button = customtkinter.CTkButton(frame, image=undo_image, text="", corner_radius=32, fg_color="#DDDCDD", state=tk.DISABLED)
-        self.redo_button = customtkinter.CTkButton(frame, image=redo_image, text="", corner_radius=32, fg_color="#DDDCDD", state=tk.DISABLED)
-        self.cut_button = customtkinter.CTkButton(frame, image=cut_image, text="", corner_radius=32, fg_color="#DDDCDD", state=tk.DISABLED)
-        self.paste_button = customtkinter.CTkButton(frame, image=paste_image, text="", corner_radius=32, fg_color="#DDDCDD", state=tk.DISABLED)
-        run_button = customtkinter.CTkButton(frame, image=run_image, text="", corner_radius=32, fg_color="#DDDCDD", state=tk.DISABLED)
+        save_as_button = customtkinter.CTkButton(frame, image=save_as_image, text="", corner_radius=32, fg_color="#DDDCDD", state=tk.DISABLED, width = 45, height=45)
+        self.save_button = customtkinter.CTkButton(frame, image=save_image, text="", corner_radius=32, fg_color="#DDDCDD", state=tk.DISABLED, width = 45, height=45)
+        open_button = customtkinter.CTkButton(frame, image=open_image, text="", command=self.open_file, corner_radius=32, fg_color="White", width = 45, height=45)
+        new_button = customtkinter.CTkButton(frame, image=new_image, text="", command=self.new_file, corner_radius=32, fg_color="White", width = 45, height=45)
+        self.undo_button = customtkinter.CTkButton(frame, image=undo_image, text="", corner_radius=32, fg_color="#DDDCDD", state=tk.DISABLED, width = 45, height=45)
+        self.redo_button = customtkinter.CTkButton(frame, image=redo_image, text="", corner_radius=32, fg_color="#DDDCDD", state=tk.DISABLED, width = 45, height=45)
+        self.cut_button = customtkinter.CTkButton(frame, image=cut_image, text="", corner_radius=32, fg_color="#DDDCDD", state=tk.DISABLED, width = 45, height=45)
+        self.paste_button = customtkinter.CTkButton(frame, image=paste_image, text="", corner_radius=32, fg_color="#DDDCDD", state=tk.DISABLED, width = 45, height=45)
+        run_button = customtkinter.CTkButton(frame, image=run_image, text="", corner_radius=32, fg_color="#DDDCDD", state=tk.DISABLED, width = 45, height=45)
 
         # Sticky fills the contents in directions: northsouth, eastwest
         save_as_button.grid(row=0, column=0, padx=5, pady=5, sticky="ns")
