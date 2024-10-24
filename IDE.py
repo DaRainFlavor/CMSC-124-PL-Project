@@ -180,7 +180,7 @@ class IDE():
     my_label.grid(row=1, column=0, sticky="e")
 
     # Introduction text beside the image
-    intro_message = "Compiley Studio is a compiler for BrainRot (.rot) files.\nBrainRot is a programming language whose syntax is\ninspired by Gen-Z terms and slangs. This preserves the\ncringe of the generation this is built."
+    intro_message = "Compiley Studio is a compiler for BrainRot (.rot) files.\nBrainRot is a programming language whose syntax is\ninspired by Gen-Alpha terms and slang. This preserves\nthe cringe of the generation this is built."
     intro_label = customtkinter.CTkLabel(self.welcome_frame, text=intro_message, font=("Arial", 20), anchor="w", justify="left")
     intro_label.grid(row=1, column=1, sticky="w")  # Place intro text in right column
 
@@ -238,13 +238,20 @@ class IDE():
       self.root.title(f"{os.path.basename(self.filepath)} - Compiley Studio")
     else:
       if self.default_text != self.scroll.get(1.0, tk.END)[:-1]:
-        # Prompt the user to save changes
-        response = msgbox.askyesnocancel("Unsaved Changes", f"Do you want to save changes to {os.path.basename(self.filepath)}?")
+        if self.filepath == None:
+          response = msgbox.askyesnocancel("Unsaved File", f"Do you want to save this draft?")
+        else:
+          # Prompt the user to save changes
+          response = msgbox.askyesnocancel("Unsaved Changes", f"Do you want to save changes to {os.path.basename(self.filepath)}?")
         
         if response is None:  # Cancel
           return
         elif response:  # Yes, save changes
           self.save_file()
+        else:
+          self.scroll.delete(1.0, tk.END)
+          self.scroll.insert(tk.END, self.default_text)  
+          self.scroll.text.edit_reset()  # Clear undo/redo history    
 
       path = askopenfilename(filetypes=[("BrainRot File", "*.rot")])
       if not path:
@@ -266,28 +273,40 @@ class IDE():
   def new_file(self):
     if self.flash: return
     if self.welcome:
-      # Open the save file dialog with a default filename
-      self.filepath = asksaveasfilename(
-        defaultextension=".rot",  # Set .rot as the default extension
-        filetypes=[("BrainRot File", "*.rot")],  # Only show .rot files
-        initialfile="new_file.rot"  # Default filename
-      )
+      # # Open the save file dialog with a default filename
+      # self.filepath = asksaveasfilename(
+      #   defaultextension=".rot",  # Set .rot as the default extension
+      #   filetypes=[("BrainRot File", "*.rot")],  # Only show .rot files
+      #   initialfile="new_file.rot"  # Default filename
+      # )
 
-      # If the user cancels the dialog, path will be an empty string
-      if not self.filepath:
-        return
+      # # If the user cancels the dialog, path will be an empty string
+      # if not self.filepath:
+      #   return
 
-      # Create a blank file at the specified path
-      with open(self.filepath, "w") as f:
-        pass  # Just create an empty file
+      # # Create a blank file at the specified path
+      # with open(self.filepath, "w") as f:
+      #   pass  # Just create an empty file
       
       self.welcome = False
       self.display_text_editor()
       self.scroll.delete(1.0, tk.END)
       self.on_text_change()
       self.can_paste()
+      self.default_text = ""
+      self.filepath = None
+      self.root.title("Unknown - Compiley Studio")
     else:
-      if self.default_text != self.scroll.get(1.0, tk.END)[:-1]:
+      if not self.filepath:
+        if self.default_text == self.scroll.get(1.0, tk.END)[:-1]: return
+
+        response = msgbox.askyesnocancel("Unsaved File", f"Do you want to save this draft?")
+        
+        if response is None:  # Cancel
+          return
+        elif response:  # Yes, save changes
+          self.save_file()
+      elif self.default_text != self.scroll.get(1.0, tk.END)[:-1]:
         # Prompt the user to save changes
         response = msgbox.askyesnocancel("Unsaved Changes", f"Do you want to save changes to {os.path.basename(self.filepath)}?")
         
@@ -296,24 +315,30 @@ class IDE():
         elif response:  # Yes, save changes
           self.save_file()
 
-      path = asksaveasfilename(
-          defaultextension=".rot",  # Set .rot as the default extension
-          filetypes=[("BrainRot File", "*.rot")],  # Only show .rot files
-          initialfile="new_file.rot"  # Default filename
-        )
-    
-      # If the user cancels the dialog, path will be an empty string
-      if not path:
-        return
-  
       self.scroll.delete(1.0, tk.END)
-      # Create a blank file at the specified path
-      with open(path, "w") as f:
-        pass  # Just create an empty file
-      self.default_text= ""
-      self.scroll.text.edit_reset()  # Clear undo/redo history
-      self.scroll.text.edit_modified(False)  # Reset the modified state
-      self.root.title(f"{os.path.basename(self.filepath)} - Compiley Studio")
+      self.default_text = ""
+      self.scroll.text.edit_reset()
+      self.filepath = None
+      self.root.title("Unknown - Compiley Studio")
+      
+      # path = asksaveasfilename(
+      #     defaultextension=".rot",  # Set .rot as the default extension
+      #     filetypes=[("BrainRot File", "*.rot")],  # Only show .rot files
+      #     initialfile="new_file.rot"  # Default filename
+      #   )
+    
+      # # If the user cancels the dialog, path will be an empty string
+      # if not path:
+      #   return
+  
+      # self.scroll.delete(1.0, tk.END)
+      # # Create a blank file at the specified path
+      # with open(path, "w") as f:
+      #   pass  # Just create an empty file
+      # self.default_text= ""
+      # self.scroll.text.edit_reset()  # Clear undo/redo history
+      # self.scroll.text.edit_modified(False)  # Reset the modified state
+      # self.root.title(f"{os.path.basename(self.filepath)} - Compiley Studio")
 
   def cut(self):
     try:
@@ -443,6 +468,16 @@ class IDE():
     
 
   def on_text_change(self, event=None):
+    print(f"{self.scroll.get(1.0, tk.END)[:-1] == self.default_text}, {self.filepath == None}")
+    if (self.scroll.get(1.0, tk.END)[:-1] == self.default_text and self.filepath == None and self.new_button.cget("state") == "normal"):
+      self.update_button_state({}, {self.new_button})
+    elif (self.scroll.get(1.0, tk.END)[:-1] != self.default_text and self.filepath == None and self.new_button.cget("state") == "disabled"):
+      self.update_button_state({self.new_button}, {})
+    elif (self.scroll.get(1.0, tk.END)[:-1] == self.default_text and (not self.filepath == None) and self.new_button.cget("state") == "disabled"):
+      self.update_button_state({self.new_button}, {})
+    # elif (self.scroll.get(1.0, tk.END)[:-1] = self.default_text and self.new_button.cget("state") == "disabled"):
+    #   self.update_button_state({self.new_button}, {})
+
     if (self.scroll.get(1.0, tk.END)[:-1] != self.default_text) and (self.save_button.cget("state") == "disabled"):
       self.update_button_state({self.save_button}, {})
     elif (self.scroll.get(1.0, tk.END)[:-1] == self.default_text) and (self.save_button.cget("state") == "normal"):

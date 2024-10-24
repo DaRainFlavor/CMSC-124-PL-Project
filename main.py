@@ -6,7 +6,10 @@ from tkinter import messagebox
 def on_closing():
   # Ask the user if they want to close the window
   if (not IDE_instance.welcome and not IDE_instance.flash) and IDE_instance.default_text != IDE_instance.scroll.get(1.0, tk.END)[:-1]:
-    response = msgbox.askyesnocancel("Unsaved Changes", f"Do you want to save changes to {os.path.basename(IDE_instance.filepath)}?")
+    if IDE_instance.filepath == None:
+      response = msgbox.askyesnocancel("Unsaved File", f"Do you want to save this draft?")
+    else:
+      response = msgbox.askyesnocancel("Unsaved Changes", f"Do you want to save changes to {os.path.basename(IDE_instance.filepath)}?")
     if response is None:  # Cancel
       return
     elif response:  # Yes, save changes
