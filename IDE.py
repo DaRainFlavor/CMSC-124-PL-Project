@@ -7,6 +7,7 @@ import tkinter.messagebox as msgbox
 import os
 import subprocess
 from scroll import *
+from terminal import *
 import threading
 
 class IDE():
@@ -21,7 +22,7 @@ class IDE():
     self.filepath=None
 
     self.root.bind_all("<Control-s>", lambda event: self.save_file())
-    self.root.bind_all("<Control-S>", lambda event: self.save_as_file())
+    self.root.bind_all("<Control-Shift-S>", lambda event: self.save_as_file())
     self.root.bind_all("<Control-o>", lambda event: self.open_file())
     self.root.bind_all("<Control-n>", lambda event: self.new_file())
 
@@ -434,41 +435,47 @@ class IDE():
     self.terminal_frame.grid_columnconfigure(0, weight=1)
 
     close_terminal_button = customtkinter.CTkButton(self.terminal_frame, text="X", width=50, command=self.close_terminal)
-    close_terminal_button.grid(row=0, column=0, sticky='ne', padx=5, pady=5)
+    # close_terminal_button.grid(row=0, column=0, sticky='ne', padx=5, pady=5)
+    close_terminal_button.pack(anchor = "e", padx=5, pady=5)
     CustomTooltipLabel(anchor_widget=close_terminal_button, text="Close")
 
-    # Create and add the scrollable text widget
-    self.terminal = customtkinter.CTkTextbox(self.terminal_frame, wrap="word", font=("Arial", 12), width=500)
-    self.terminal.grid(row=1, column=0, sticky='nsew')
-    self.terminal.insert("1.0", "Compiling...")
+    # # Create and add the scrollable text widget
+    # self.terminal = customtkinter.CTkTextbox(self.terminal_frame, wrap="word", font=("Arial", 12), width=500)
+    # self.terminal.grid(row=1, column=0, sticky='nsew')
+    # self.terminal.insert("1.0", "Compiling...")
 
-    # Start a thread to run the MIPS code
-    threading.Thread(target=self.run_mips).start()
 
-  def run_mips(self):
-    mars_path = "Mars4_5.jar"
-    code = self.scroll.text.get("1.0", tk.END)[:-1]
-    assembly_file_name = f"{os.path.basename(self.filepath)}.s"
+    self.terminal = JavaProcessInterface(self.terminal_frame)
+    self.terminal.start_java_process(self.filepath)
+
+
+  #   # Start a thread to run the MIPS code
+  #   threading.Thread(target=self.run_mips).start()
+
+  # def run_mips(self):
+  #   mars_path = "Mars4_5.jar"
+  #   code = self.scroll.text.get("1.0", tk.END)[:-1]
+  #   assembly_file_name = f"{os.path.basename(self.filepath)}.s"
     
-    with open(assembly_file_name, 'w') as f:
-        f.write(code)
+  #   with open(assembly_file_name, 'w') as f:
+  #       f.write(code)
 
-    try:
-        result = subprocess.run(
-            ['java', '-jar', mars_path, assembly_file_name],
-            capture_output=True,
-            text=True
-        )
-        self.terminal.delete(1.0, tk.END)  # Clear the text
-        # Update the terminal widget with MIPS output
-        self.terminal.insert(tk.END, f"\n{result.stdout}")
-    except Exception as e:
-        self.terminal.delete(1.0, tk.END)  # Clear the text
-        self.terminal.insert(tk.END, "\nError: MARS is not installed or not found in your system's PATH.\n")
+  #   try:
+  #       result = subprocess.run(
+  #           ['java', '-jar', mars_path, assembly_file_name],
+  #           capture_output=True,
+  #           text=True
+  #       )
+  #       self.terminal.delete(1.0, tk.END)  # Clear the text
+  #       # Update the terminal widget with MIPS output
+  #       self.terminal.insert(tk.END, f"\n{result.stdout}")
+  #   except Exception as e:
+  #       self.terminal.delete(1.0, tk.END)  # Clear the text
+  #       self.terminal.insert(tk.END, "\nError: MARS is not installed or not found in your system's PATH.\n")
     
 
   def on_text_change(self, event=None):
-    print(f"{self.scroll.get(1.0, tk.END)[:-1] == self.default_text}, {self.filepath == None}")
+    # print(f"{self.scroll.get(1.0, tk.END)[:-1] == self.default_text}, {self.filepath == None}")
     if (self.scroll.get(1.0, tk.END)[:-1] == self.default_text and self.filepath == None and self.new_button.cget("state") == "normal"):
       self.update_button_state({}, {self.new_button})
     elif (self.scroll.get(1.0, tk.END)[:-1] != self.default_text and self.filepath == None and self.new_button.cget("state") == "disabled"):
