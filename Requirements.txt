@@ -2,3 +2,4 @@ tkinter
 customtkinter
 pillow
 Custom-Tooltip --upgrade
+#python -m pip
