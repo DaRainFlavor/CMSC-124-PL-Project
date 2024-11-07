@@ -113,7 +113,8 @@ class Compiler:
         "t": [5]
       },
       6: {
-        "i": [7]
+        "i": [7],
+        "p": [15]
       },
       7: {
         "g": [8]
@@ -215,7 +216,7 @@ class Compiler:
         withTransition = False
         break
     # print(withTransition)
-    # print(state)
+    print(state)
     # print(f"curr: {self.code[self.idx]}")
     # print(self.code[self.idx] == "\"")
     if(self.idx<len(self.code) and self.code[self.idx] == '§'):
@@ -281,7 +282,6 @@ class Compiler:
       print("b")
       self.debugger(1)
       return "", "$"
-
 
   def DFAStringVal(self, state):    
     # NFA ALPHABET (COLUMN)
@@ -384,7 +384,8 @@ class Compiler:
     if char == ">": return self.handle_token(">", "GREATER_THAN")
     if char == "=": return self.handle_token("=", "EQUAL")
     if char == ",": return self.handle_token(",", "COMMA")
-    if char in "+-*/": return self.handle_token(char, "OPERATOR")
+    if char == "-": return self.handle_token(",", "NEGATIVE")
+    if char in "+*/": return self.handle_token(char, "OPERATOR")
 
     return self.scanFSMs()
 
@@ -407,25 +408,25 @@ yap << " Input second number: ";
 spill >> num2;
 yap << " Choose an operation (+, -, *, /): ";
 spill >> operation;
-let him cook (operation == "+"){
-  result = num1 + num2;
-  yap << "Result: " << num1 << " + " << num2 << " = " << result << slay;
+let_him_cook (operation == "+"){
+    result = num1 + num2;
+    yap << "Result: " << num1 << " + " << num2 << " = " << result << slay;
 }
 what if (operation == "-"){
-  result = num1 - num2;
-  yap << "Result: " << num1 << " - " << num2 << " = " << result << slay;
+    result = num1 - num2;
+    yap << "Result: " << num1 << " - " << num2 << " = " << result << slay;
 }
 what if (operation == "*"){
-  result = num1 * num2;
-  yap << "Result: " << num1 << " * " << num2 << " = " << result << slay;
+    result = num1 * num2;
+    yap << "Result: " << num1 << " * " << num2 << " = " << result << slay;
 }
 what if (operation == "/"){
-  result = num1 / num2;
-  yap << "Result: " << num1 << " / " << num2 << " = " << result << slay;
+    result = num1 / num2;
+    yap << "Result: " << num1 << " / " << num2 << " = " << result << slay;
 }
 cooked {
-  yap  << "Invalid operation";
-  it's giving; // force to end the program
+    yap  << "Invalid operation";
+    it's giving; // force to end the program
 }'''
 
 comp = Compiler(code)
