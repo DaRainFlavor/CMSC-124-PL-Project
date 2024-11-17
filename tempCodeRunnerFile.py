@@ -1,1 +1,1 @@
-' '.join(text.split())
+co

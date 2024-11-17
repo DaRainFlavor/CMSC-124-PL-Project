@@ -62,7 +62,7 @@ class IDE():
     label.grid(row = 1, column = 0, pady=5)
 
     # After 3 seconds, switch back to menu1 and restore the top bar
-    self.itemFrame.after(3000, lambda: [self.display_welcome_window(), customtkinter.set_appearance_mode("Dark")])
+    self.itemFrame.after(3000, lambda: [self.display_welcome_window(), customtkinter.set_appearance_mode("Light")])
 
 
   def toggle_modes(self):
@@ -181,7 +181,7 @@ class IDE():
     my_label.grid(row=1, column=0, sticky="e")
 
     # Introduction text beside the image
-    intro_message = "Compiley Studio is a compiler for BrainRot (.rot) files.\nBrainRot is a programming language whose syntax is\ninspired by Gen-Alpha terms and slang. This preserves\nthe cringe of the generation this is built."
+    intro_message = "Compiley Studio is a compiler for BrainRot (.rot) files.\nBrainRot is a programming language whose syntax is\ninspired by Gen-Z and Gen-Alpha terms and slang. This preserves\nthe cringe of the generation this is built."
     intro_label = customtkinter.CTkLabel(self.welcome_frame, text=intro_message, font=("Arial", 20), anchor="w", justify="left")
     intro_label.grid(row=1, column=1, sticky="w")  # Place intro text in right column
 
@@ -443,8 +443,7 @@ class IDE():
     # self.terminal = customtkinter.CTkTextbox(self.terminal_frame, wrap="word", font=("Arial", 12), width=500)
     # self.terminal.grid(row=1, column=0, sticky='nsew')
     # self.terminal.insert("1.0", "Compiling...")
-
-
+    
     self.terminal = JavaProcessInterface(self.terminal_frame)
     self.terminal.start_java_process(self.filepath)
 

@@ -3,6 +3,8 @@ from PIL import ImageTk, Image
 from custom_hovertip import CustomTooltipLabel
 import subprocess
 import threading
+from COMPILER.compiler import Compiler
+import tempfile
 
 class JavaProcessInterface:
     def __init__(self, root):
@@ -29,8 +31,22 @@ class JavaProcessInterface:
         # self.start_java_process()
 
     def start_java_process(self, filepath):
+        # Read the content from the provided filepath
+        with open(filepath, 'r', encoding='utf-8') as original_file:
+            content = original_file.read()
+            c = Compiler(content)
+            self.display_output(c.terminalParsingResult)
+            if not c.success: return
+            content = c.getFinalMIPS()
+            # print(f"content: {content}")
+
+        # Write the content to a temporary file
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".s") as temp_file:
+            temp_file.write(content.encode('utf-8'))
+            temp_filepath = temp_file.name
+
         self.process = subprocess.Popen(
-            ['java', '-jar', 'Mars4_5.jar', filepath],
+            ['java', '-jar', 'Mars4_5.jar', temp_filepath],
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
@@ -56,7 +72,8 @@ class JavaProcessInterface:
                 output_buffer = ""
 
             if char == "§":
-                self.display_output(output_buffer)
+                self.display_output(output_buffer[:-1])
+                # self.display_output(output_buffer)
                 flag = False
                 break  # Stop reading until user provides input
         
