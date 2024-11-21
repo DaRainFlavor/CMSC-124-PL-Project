@@ -608,7 +608,10 @@ class Compiler:
   def copyString(self, source, copyTo): # copyTo = source
     if(not "string_copy" in self.subroutine):
       self.subroutine["string_copy"] = f"string_copy:\ncopy_loop:\nlb $t0, 0($a0)\nsb $t0, 0($a1)\nbeq $t0, $zero, copy_done\naddi $a0, $a0, 1\naddi $a1, $a1, 1\nj copy_loop\n\ncopy_done:\njr $ra\n"
-    self.mipsCode+=f"la $a0, {source}\nla $a1, {copyTo}\njal string_copy\n\n"
+    if '$' in copyTo:
+      self.mipsCode+=f"la $a0, {source}\nmove $a1, {copyTo}\njal string_copy\n\n"
+    else:
+      self.mipsCode+=f"la $a0, {source}\nla $a1, {copyTo}\njal string_copy\n\n"
 
   def translateStringAssigment(self, varName, varName1, varName1Type):
     filtered1 = varName1.replace('\n', '#')
