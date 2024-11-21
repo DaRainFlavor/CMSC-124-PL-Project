@@ -5,6 +5,7 @@ import subprocess
 import threading
 from COMPILER.compiler import Compiler
 import tempfile
+import time
 
 class JavaProcessInterface:
     def __init__(self, root):
@@ -30,30 +31,41 @@ class JavaProcessInterface:
         self.process = None
         # self.start_java_process()
 
+    # def start_process(self, filepath):
+    #     start_time = time.time()  # Start the timer
+    #     self.start_java_process(filepath)
+    #     # Wait for the process to finish
+    #     self.process.wait()  # This blocks until the process ends
+    #     end_time = time.time()  # End the timer after the process completes
+    #     self.display_output(f"Execution time: {end_time - start_time:.6f} seconds")
+
     def start_java_process(self, filepath):
-        # Read the content from the provided filepath
-        with open(filepath, 'r', encoding='utf-8') as original_file:
-            content = original_file.read()
-            c = Compiler(content)
-            self.display_output(c.terminalParsingResult)
-            if not c.success: return
-            content = c.getFinalMIPS()
-            # print(f"content: {content}")
+        try:
+            # Read the content from the provided filepath
+            with open(filepath, 'r', encoding='utf-8') as original_file:
+                content = original_file.read()
+                c = Compiler(content)
+                self.display_output(c.terminalParsingResult)
+                if not c.success: return
+                content = c.getFinalMIPS()
+                # print(f"content: {content}")
 
-        # Write the content to a temporary file
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".s") as temp_file:
-            temp_file.write(content.encode('utf-8'))
-            temp_filepath = temp_file.name
+            # Write the content to a temporary file
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".s") as temp_file:
+                temp_file.write(content.encode('utf-8'))
+                temp_filepath = temp_file.name
 
-        self.process = subprocess.Popen(
-            ['java', '-jar', 'Mars4_5.jar', temp_filepath],
-            stdin=subprocess.PIPE,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True
-        )
-        # Start a thread to read the output from the Java process
-        threading.Thread(target=self.read_output, daemon=True).start()
+            self.process = subprocess.Popen(
+                ['java', '-jar', 'Mars4_5.jar', temp_filepath],
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True
+            )
+            # Start a thread to read the output from the Java process
+            threading.Thread(target=self.read_output, daemon=True).start()
+        except Exception as e:
+            print(f"Error occurred: {e}")
 
     def read_output(self):
         # prompts = ["Enter your name: ", "Enter a number: ", "enter your first number: ", "enter your second number: ", "Yet another prompt:"]
@@ -72,7 +84,7 @@ class JavaProcessInterface:
                 output_buffer = ""
 
             if char == "§":
-                self.display_output(output_buffer[:-1])
+                self.display_output(output_buffer)
                 # self.display_output(output_buffer)
                 flag = False
                 break  # Stop reading until user provides input

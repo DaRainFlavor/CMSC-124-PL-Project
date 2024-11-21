@@ -8,17 +8,14 @@ class Compiler:
     self.stack = -1
 
     self.lexer_table = {}
-    self.symbol_table = {
-      ("tempInt", -1): {"datatype": 'CLOUT', "value": True, "stack": -1},
-      ("tempStr", -1): {"datatype": 'SIGMA', "value": True, "stack": -1}
-    }
+    self.symbol_table = {}
 
     self.preprocessor()
     self.currentToken = self.currentLexeme = None
     self.currentLexemeToken()
 
 
-    self.mipsData = ".data\n.align 2\nscanFlag: .asciiz \"§\"\ntempInt: .word 0\n.align 2\ntempStr: .space 1024\n"
+    self.mipsData = ".data\n.align 2\n.align 2\n"
     self.mipsCode = "\n.text\n.globl main\nmain:\n\n"
     self.subroutine = {}
 
@@ -354,17 +351,19 @@ class Compiler:
     # NFA ALPHABET (COLUMN)
     # (0) "
     # (1) \
+    # (2) n
+    # (3) t
     # (2) §
     # (3) other symbols
 
     table = [
-              [1,6,6,6],
-              [5,2,6,3],  
-              [4,4,6,6],
-              [5,2,6,3],
-              [5,2,6,3],  
-              [6,6,6,6],
-              [6,6,6,6],
+              [1,6,6,6,6,6],
+              [5,2,3,3,6,3],  
+              [4,4,4,4,6,6],
+              [5,2,3,3,6,3],
+              [5,2,3,3,6,3],  
+              [6,6,6,6,6,6],
+              [6,6,6,6,6,6],
             ]
     
     stop_chars = {"§"}
@@ -450,7 +449,7 @@ class Compiler:
     if char == "<": return self.handle_token("<", "LESS_THAN")
     if char == ">": return self.handle_token(">", "GREATER_THAN")
     if char == "=": return self.handle_token("=", "EQUAL")
-    if char == "!": return self.handle_token("=", "NOT")
+    if char == "!": return self.handle_token("!", "NOT")
     if char == ",": return self.handle_token(",", "COMMA")
     if char == "-": return self.handle_token("-", "MINUS")
     if char in "+": return self.handle_token(char, "PLUS")
@@ -518,9 +517,9 @@ class Compiler:
       lexemeScope = self.getScope(lexeme)
       token = self.symbol_table[lexeme, lexemeScope]["datatype"]
     if(token in ['SIGMA', 'SIGMA_LITERAL', 'SLAY']):
-      return "tempStr"
+      return "$a2", 'SIGMA', 
     if(token in ['CLOUT', 'CLOUT_LITERAL']):
-      return "tempInt"
+      return "$a0", 'CLOUT'
 
     else:
       self.debugInvalidPrint(token)
@@ -540,19 +539,28 @@ class Compiler:
       elif (datatype == "SIGMA"):
         self.mipsData+=(f".align 2\n{varName}: .space 1024\n")
 
-  def translateIntAssigment(self, varName, varName1, varName1Type):
+  def translateIntAssignment(self, varName, varName1, varName1Type):
     self.mipsCode+=f"\n# {varName} = {varName1}\n"
     firstLine = ""
     secondLine = ""
     if(varName1Type == "CLOUT_LITERAL"):
+      if '$' in varName:
+        self.mipsCode+=f"li $a0, {varName1}\n"  
+        return
       firstLine = f"li $t0, {varName1}\n"
     else:
       varName1Scope = self.getScope(varName1)
       varName1Stack = self.symbol_table[varName1, varName1Scope]["stack"]
       if(varName1Stack == -1): # global variable name
+        if '$' in varName:
+          self.mipsCode+=f"lw $a0, {varName1}\n"
+          return  
         firstLine = f"lw $t0, {varName1}\n"
       else:
         varName1Stack*=4
+        if '$' in varName:
+          self.mipsCode+=f"lw $a0, {varName1Stack}($sp)\n"
+          return  
         firstLine = f"lw $t0, {varName1Stack}($sp)\n"
     varNameScope = self.getScope(varName)
     varNameStack = self.symbol_table[varName, varNameScope]["stack"]
@@ -564,34 +572,38 @@ class Compiler:
     self.mipsCode+=(firstLine+secondLine+"\n")
 
   def translateString(self, assignedTo, strValue):
-    self.mipsCode+=f"la $a0, {assignedTo}\n"
+    storage = '$a0'
+    if '$' in assignedTo:
+      storage = assignedTo
+    else:
+      self.mipsCode+=f"la $a0, {assignedTo}\n"
     stack = 0
     slash = 0
     for char in strValue:
       if(char == '\\' and not slash):
         slash = True
         continue
-      if slash and char != 'n':
+      if slash:
         if(char == '\\'):
-          slash = True
-        else:
+          char == '\\'
           slash = False
-        self.mipsCode+=f"li $t0, '\\'\nsb $t0, {stack}($a0)\n"
-        stack+=1
-        if(char == '\\'):
-          continue
-      if slash and char == 'n':
-        self.mipsCode+=f"li $t0, 10\nsb $t0, {stack}($a0)\n"
-        stack+=1
-        continue
-      if char == '\n':
-        self.mipsCode+=f"li $t0, 10\nsb $t0, {stack}($a0)\n"
-        stack+=1
-        continue
+        elif(char == 'n'):
+          char = '\n'
+          slash = False
+        elif(char == 't'):
+          char = '\t'
+          slash = False
+        elif(char == '\"'):
+          char = '\"'
+          slash = False
+      comment = char
+      if(char == '\n'): comment="\\n"
+      if(char == '\t'): comment ="\\t"
+      if(char == '\"'): comment ="\""
 
-      self.mipsCode+=f"li $t0, '{char}'\nsb $t0, {stack}($a0)\n"
+      self.mipsCode+=f"li $t0, {ord(char)}\t# '{comment}'\nsb $t0, {stack}({storage})\n"
       stack+=1
-    self.mipsCode+=f"# add null terminator\nli $t0, 0\nsb $t0, {stack}($a0)\n\n"
+    self.mipsCode+=f"# add null terminator\nli $t0, 0\nsb $t0, {stack}({storage})\n\n"
 
   def copyString(self, source, copyTo): # copyTo = source
     if(not "string_copy" in self.subroutine):
@@ -604,16 +616,16 @@ class Compiler:
     firstLine = ""
     secondLine = ""
     if(varName1Type == "SLAY"):
-      if(self.getScope(varName) == -1):
+      if('$' in varName or self.getScope(varName) == -1):
         self.translateString(varName, '\\n')
         return
     elif (varName1Type == 'SIGMA_LITERAL'):
-      if(self.getScope(varName) == -1):
+      if('$' in varName or self.getScope(varName) == -1):
         self.translateString(varName, varName1[1:-1])
         return
       return
     else:
-      if(self.getScope(varName) == -1): # change this, this is both global
+      if('$' in varName or self.getScope(varName) == -1): # change this, this is both global
         self.copyString(varName1, varName)
         return
       return
@@ -625,7 +637,9 @@ class Compiler:
     if operator == '*': operator = 'mul'
     if operator == '/': operator = 'div'
 
-    varName1Scope = self.getScope(varName1)
+    varName1Scope = -1
+    if not '$' in varName1:
+      varName1Scope = self.getScope(varName1)
     varName2Scope = ""
     varName3Scope = ""
     print(f"type: {varName1Type}")
@@ -653,11 +667,17 @@ class Compiler:
       self.mipsCode+=f"li $t1, {int(varName3)}\n"
 
     if operator == 'div':
-      self.mipsCode+=f"div $t0, $t1\nmflo $t2\n"
+      if '$' in varName1:
+        self.mipsCode+=f"div $t0, $t1\nmflo {varName1}\n"  
+      else:
+        self.mipsCode+=f"div $t0, $t1\nmflo $t2\n"
     else:
-      self.mipsCode+=f"{operator} $t2, $t0, $t1\n"
+      if '$' in varName1:
+        self.mipsCode+=f"{operator} {varName1}, $t0, $t1\n"
+      else:
+        self.mipsCode+=f"{operator} $t2, $t0, $t1\n"
     
-    if varName1Scope == -1:
+    if varName1Scope == -1 and not '$' in varName1:
       self.mipsCode+=f"sw $t2, {varName1}\n\n"
 
   def translateStringtoA(self, strValue, n):
@@ -669,25 +689,25 @@ class Compiler:
       if(char == '\\' and not slash):
         slash = True
         continue
-      if slash and char != 'n':
+      if slash:
         if(char == '\\'):
-          slash = True
-        else:
+          char = '\\'
           slash = False
-        self.mipsCode+=f"li $t1, '\\'\nsb $t1, {stack}($a{n})\n"
-        stack+=1
-        if(char == '\\'):
-          continue
-      if slash and char == 'n':
-        self.mipsCode+=f"li $t1, 10\nsb $t1, {stack}($a{n})\n"
-        stack+=1
-        continue
-      if char == '\n':
-        self.mipsCode+=f"li $t1, 10\nsb $t1, {stack}($a{n})\n"
-        stack+=1
-        continue
+        elif(char == 'n'):
+          char = '\n'
+          slash = False
+        elif(char == 't'):
+          char = '\t'
+          slash = False
+        elif(char == '\"'):
+          char = '\"'
+          slash = False
+      comment = char
+      if(char == '\n'): comment="\\n"
+      if(char == '\t'): comment ="\\t"
+      if(char == '\"'): comment ="\""
 
-      self.mipsCode+=f"li $t1, '{char}'\nsb $t1, {stack}($a{n})\n"
+      self.mipsCode+=f"li $t1, {ord(char)}\t# '{comment}'\nsb $t1, {stack}($a{n})\n"
       stack+=1
 
     self.mipsCode+=f"# add null terminator\nli $t1, 0\nsb $t1, {stack}($a{n})\n\n"
@@ -704,13 +724,18 @@ class Compiler:
     filtered2 = varName2.replace('\n', '#')
     filtered3 = varName3.replace('\n', '#')
     self.mipsCode+=f"# {varName1} = {filtered2}{operator}{filtered3}\n"
-    varName1Scope = self.getScope(varName1)
+    #varName1Scope = self.getScope(varName1)
     varName2Scope = ""
     varName3Scope = ""
     if varName2Type == 'IDENTIFIER':
       varName2Scope = self.getScope(varName2)
     if varName3Type == 'IDENTIFIER':
       varName3Scope = self.getScope(varName3)
+
+    if varName1 != '$a2':
+      self.mipsCode+=f"la $a2, {varName1}\n\n"
+    else:
+      self.mipsCode+=f"li $v0, 9\nli $a0, 1024\nsyscall\nmove $a2, $v0\nmove $t2, $a2\n\n"
 
     if varName3Scope:
       if varName3Scope == -1:
@@ -728,20 +753,19 @@ class Compiler:
         self.translateStringtoA('\\n', 0)  
       else:
         self.translateStringtoA(varName2[1:-1], 0)
-    self.mipsCode+=f"la $a2, {varName1}\n"
 
     self.translateConcatenation()
     
   def translateAssignment(self, varName1, varName1Type, varName2, varName2Type, operator, varName3, varName3Type):
     if(not operator):
       if(varName1Type == 'CLOUT'):
-        self.translateIntAssigment(varName1, varName2, varName2Type)
+        self.translateIntAssignment(varName1, varName2, varName2Type)
       elif(varName1Type == 'SIGMA'):
         self.translateStringAssigment(varName1, varName2, varName2Type)
     elif operator:
       if(varName1Type == 'SIGMA' and operator != '+'):
         self.debugInvalidStringOperation(operator)
-      if(varName1 in [varName2, varName3] and self.isValueAssigned(varName1, varName1Type)):
+      if('$' not in varName1 and varName1 in [varName2, varName3] and self.isValueAssigned(varName1, varName1Type)):
         self.debugNoValueAssigned(varName1)
       if(varName3Type == 'CLOUT_LITERAL' and operator == '/' and int(varName3) == 0):
         self.debugDivisionbyZero()
@@ -750,7 +774,7 @@ class Compiler:
       if(varName1Type == 'SIGMA'):
         self.translateStrComp(varName1, varName1Type, varName2, varName2Type, operator, varName3, varName3Type)
 
-############## DEBUGERS ###############
+############## DEBUGGERS ###############
   def debugMissingDataType(self):
     raise SyntaxError("Error in line {self.line}: Expected data type.")
     
@@ -780,10 +804,16 @@ class Compiler:
   
   def debugInvalidPrint(self, token):
     raise SyntaxError(f"Error in line {self.line}: {token} can't be printed")
+  
+  def debugUnexpectedKeyword(self, lexeme):
+    raise SyntaxError(f"Error in line {self.line}: Unexpected keyword: {lexeme}.")
 
 ############## SEMANTIC ANALYZERS ###############
   def isSameType(self, varName, firstTermLexeme, firstTermToken):
-    varNameType = self.symbol_table[varName, self.getScope(varName)]["datatype"]
+    varNameType = ""
+    if varName not in ["CLOUT", "SIGMA"]:
+      varNameType = self.symbol_table[varName, self.getScope(varName)]["datatype"]
+    else: varNameType = varName
     if(varNameType == "CLOUT" and firstTermToken == "CLOUT_LITERAL"):
       return True
     if(varNameType == "SIGMA" and firstTermToken in ["SIGMA_LITERAL", "SLAY"]):
@@ -807,10 +837,12 @@ class Compiler:
     elif self.currentToken in ['IDENTIFIER', 'CLOUT', 'SIGMA', 'IDENTIFIER', 'LET', 'YAP', 'SPILL', "IT'S"]:
       self.parseStatement()
       self.parseProgram()
+    elif self.currentToken in ['SLAY', 'SIGMA_LITERAL', 'COOKED', 'CLOUT_LITERAL', 'WHAT', 'PLUS', 'MINUS', "MULTIPLY", "DIVIDE", "EQUAL", "NOT", "IF", "GREATER_THAN", "LESS_THAN", "OPEN_PARENTHESIS", "CLOSE_PARENTHESIS", "OPEN_CURLY_BRACE", "CLOSE_CURLY_BRACE"]:
+      self.debugUnexpectedKeyword(self.currentLexeme)
     else: return # for ε
 
   def parseStatement(self):
-    # <Statement> ::= <Declaration> | <Assignment> | <If> | <Print> | <Scan> | "IT'S" "GIVING"
+    # <Statement> ::= <Declaration> | <Assignment> | <If> | <Print> | <Scan> | "IT'S" "GIVING" | "SEMICOLON"
     if self.currentToken in ['CLOUT', 'SIGMA']:
       self.parseDeclaration()
     elif self.currentToken == 'IDENTIFIER':
@@ -825,6 +857,10 @@ class Compiler:
       self.match("IT'S")
       self.match("GIVING")
       self.translateReturn()
+    elif self.currentToken == 'SEMICOLON':
+      self.match('SEMICOLON')
+    else:
+      self.debugUnexpectedKeyword(self.currentLexeme)
 
   def parseDeclaration(self):
     # <Declaration> ::= <Data_type> <Variable_list> 'SEMICOLON'
@@ -871,34 +907,45 @@ class Compiler:
     fromPrint = False
     # <Expression> ::= <Term><Expression_prime>
     firstTermLexeme, firstTermToken = self.parseTerm()
+    varNameType = varName
     if not varName:
       fromPrint = True
-      varName = self.findVarName(firstTermLexeme, firstTermToken)
-    self.isSameType(varName, firstTermLexeme, firstTermToken)
+      varName, varNameType = self.findVarName(firstTermLexeme, firstTermToken)
+    print("FIRST")
+    self.isSameType(varNameType, firstTermLexeme, firstTermToken)
+    print("SECOND")
     if(firstTermToken == 'IDENTIFIER' and self.symbol_table[firstTermLexeme, self.getScope(firstTermLexeme)]["value"] == False):
       self.debugNoValueAssigned(firstTermLexeme)
     operator, secondTermLexeme, secondTermToken = self.parseExpressionPrime()
     print(f"operator: {operator}")
     if(secondTermToken == 'IDENTIFIER' and self.symbol_table[secondTermLexeme, self.getScope(secondTermLexeme)]["value"] == False):
       self.debugNoValueAssigned(secondTermLexeme)
+    print('third')
     if(operator):
       print("Naa")
       if firstTermLexeme == 'IDENTIFIER':
         self.isValueAssigned(firstTermLexeme, firstTermToken)
       if secondTermLexeme == 'IDENTIFIER':
         self.isValueAssigned(secondTermLexeme, secondTermToken)
-      self.isSameType(varName, secondTermLexeme, secondTermToken)
-    self.translateAssignment(varName, self.getType(varName), firstTermLexeme, firstTermToken, operator, secondTermLexeme, secondTermToken)
+      self.isSameType(varNameType, secondTermLexeme, secondTermToken)
+    else:
+      self.mipsCode+=f"li $v0, 9\nli $a0, 1024\nsyscall\nmove $a2, $v0\nmove $t2, $a2\n\n"
+    print('Fourth')    
+    if fromPrint:
+      print('YEYEYEYEYEY')
+      self.translateAssignment(varName, varNameType, firstTermLexeme, firstTermToken, operator, secondTermLexeme, secondTermToken)
+    else:
+      self.translateAssignment(varName, self.getType(varName), firstTermLexeme, firstTermToken, operator, secondTermLexeme, secondTermToken)
     if fromPrint:
       if(operator):
         self.mipsCode+=f'\n# Print {firstTermToken}{operator}{secondTermToken}\n'
       else:
         self.mipsCode+=f"\n# Print {firstTermToken}\n"
       
-      if(varName == 'tempInt'):
-        self.mipsCode+=f"lw $a0, tempInt\nli $v0, 1\nsyscall\n\n"
-      if(varName == 'tempStr'):
-        self.mipsCode+=f"la $a0, tempStr\nli $v0, 4\nsyscall\n\n"
+      if(varName == '$a0'):
+        self.mipsCode+=f"li $v0, 1\nsyscall\n\n"
+      if(varName == '$a2'):
+        self.mipsCode+=f"move $a0, $t2\nli $v0, 4\nsyscall\n\n"
   
   def parseTerm(self):
     # <Term> ::= 'IDENTIFIER' | <Literal>
@@ -998,9 +1045,9 @@ class Compiler:
     self.updateSymbolTableValue(lexeme)
     
     if(self.getType(lexeme) == "CLOUT"):
-      self.mipsCode+=f"\n# add scanning flag\nla $a0, scanFlag\nli $v0, 4\nsyscall\n\n# scan {lexeme}\nli $v0, 5\nsyscall\nsw $v0, {lexeme}\n"
+      self.mipsCode+=f"\n# add scanning flag § (167)\nli $a0, 167\nli $v0, 11\nsyscall\n\n# scan {lexeme}\nli $v0, 5\nsyscall\nsw $v0, {lexeme}\n"
     if(self.getType(lexeme) == "SIGMA"):
-      self.mipsCode+=f"\n# add scanning flag\nla $a0, scanFlag\nli $v0, 4\nsyscall\n\n# scan {lexeme}\nli $v0, 8\nla $a0, {lexeme}\nli $a1, 1024\nsyscall\n"
+      self.mipsCode+=f"\n# add scanning flag § (167)\nli $a0, 167\nli $v0, 11\nsyscall\n\n# scan {lexeme}\nli $v0, 8\nla $a0, {lexeme}\nli $a1, 1024\nsyscall\n"
     self.parseScanPrime()
     self.match('SEMICOLON')
 
@@ -1014,42 +1061,82 @@ class Compiler:
       self.isInSymbolTable(lexeme)
       self.updateSymbolTableValue(lexeme)
       if(self.getType(lexeme) == "CLOUT"):
-        self.mipsCode+=f"\n# add scanning flag\nla $a0, scanFlag\nli $v0, 4\nsyscall\n\n# scan {lexeme}\nli $v0, 5\nsyscall\nsw $v0, {lexeme}\n"
+        self.mipsCode+=f"\n# add scanning flag § (167)\nli $a0, 167\nli $v0, 11\nsyscall\n\n# scan {lexeme}\nli $v0, 5\nsyscall\nsw $v0, {lexeme}\n"
       if(self.getType(lexeme) == "SIGMA"):
-        self.mipsCode+=f"\n# add scanning flag\nla $a0, scanFlag\nli $v0, 4\nsyscall\n\n# scan {lexeme}\nli $v0, 8\nla $a0, {lexeme}\nli $a1, 1024\nsyscall\n"
+        self.mipsCode+=f"\n# add scanning flag § (167)\nli $a0, 167\nli $v0, 11\nsyscall\n\n# scan {lexeme}\nli $v0, 8\nla $a0, {lexeme}\nli $a1, 1024\nsyscall\n"
       self.parseScanPrime()
     else: return
 
-# code = '''clout num1,num^^^2, result;
-# sigma operation;
-# yap << " Input first number: ";
-# spill >> num1;
-# yap << " Input second number: ";
-# spill >> num2;
-# yap << " Choose an operation (+, -, *, /): ";
-# spill >> operation;
-# let him cook (operation == "+"){
-#     result = num1 + num2;
-#     yap << "Result: " << num1 << " + " << num2 << " = " << result << slay;
-# }
-# what if (operation == "-"){
-#     result = num1 - num2;
-#     yap << "Result: " << num1 << " - " << num2 << " = " << result << slay;
-# }
-# what if (operation == "*"){
-#     result = num1 * num2;
-#     yap << "Result: " << num1 << " * " << num2 << " = " << result << slay;
-# }
-# what if (operation == "/"){
-#     result = num1 / num2;
-#     yap << "Result: " << num1 << " / " << num2 << " = " << result << slay;
-# }
-# cooked {
-#     yap  << "Invalid operation";
-#     it’s giving; // force to end the program
-# }'''
+  def parseIf(self):
+    #<If> ::= 'LET' 'HIM' 'COOK' <Condition> <Block> <Else_if> <Else>
+    self.match('LET')
+    self.match('HIM')
+    self.match('COOK')
+    self.parseCondition()
+    self.parseBlock()
+    self.parseElseIf()
+    self.parseElse()
 
-# code1 = '''clout x=3; 
-# y = 3; //spill<<y;
-# '''
-# c = Compiler(code1)
+  def parseElseIf(self):
+    #<Else_if> ::= 'WHAT' 'IF' <Condition> <Block> <Else_if> | ε
+    if(self.currentToken == 'WHAT'):
+      self.match('WHAT')
+      self.match('IF')
+      self.parseCondition()
+      self.parseBlock()
+      self.parseElseIf()
+    else: return
+
+  def parseElse(self):
+    # <Else> ::= 'COOKED' <Block> | ε
+    if(self.currentToken == 'COOKED'):
+      self.match('COOKED')
+      self.parseBlock()
+    else: return
+
+  def parseCondition(self):
+    # <Condition> ::= 'OPEN_PARENTHESIS' <Expression> (<Relational_operator> <Expression> | ε) 'CLOSE_PARENTHESIS'
+    self.match('OPEN_PARENTHESIS')
+    self.parseExpression()
+    if(self.currentToken in ['EQUAL' , 'LESS_THAN' , 'GREATER_THAN' , 'NOT']):
+      self.parseRelationalOperator()
+      self.parseExpression()
+    self.match('CLOSE_PARENTHESIS')
+
+  def parseRelationalOperator(self):
+    # <Relational_operator> ::= 'EQUAL' 'EQUAL' | <Less> | 'NOT' 'EQUAL' | <Great>
+    if(self.currentToken == 'EQUAL'):
+      self.match('EQUAL')
+      self.match('EQUAL')
+    elif(self.currentToken == 'LESS_THAN'):
+      self.parseLess()
+    elif(self.currentToken == 'NOT'):
+      self.match('NOT')
+      self.match('EQUAL')
+    elif(self.currentToken == 'GREATER_THAN'):
+      self.parseGreat()
+
+  def parseLess(self):
+    # <Less> ::= 'LESS_THAN' <Relational_prime>
+    self.match('LESS_THAN')
+    self.parseRelationalPrime()
+
+  def parseGreat(self):
+    # <Great> ::= 'GREATER_THAN' <Relational_prime>
+    self.match('GREATER_THAN')
+    self.parseRelationalPrime()
+  
+  def parseRelationalPrime(self):
+    # <Relational_prime> ::= 'EQUAL' | ε
+    if(self.currentToken == 'EQUAL'):
+      self.match('EQUAL')
+    else: return
+
+  def parseBlock(self):
+    # <Block> ::= 'OPEN_CURLY_BRACE' <Program> 'CLOSE_CURLY_BRACE' | <Statement>
+    if(self.currentToken == 'OPEN_CURLY_BRACES'):
+      self.match('OPEN_CURLY_BRACES')
+      self.parseProgram()
+      self.match('CLOSE_CURLY_BRACES')
+    else:
+      self.parseStatement()
