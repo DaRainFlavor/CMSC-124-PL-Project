@@ -71,14 +71,16 @@ class IDE():
       if not self.welcome:
         self.scroll.text.configure(bg='#f5f5f5', foreground="#000000",
                             insertbackground='black',
-                            selectbackground="#cce7ff")
+                            selectbackground="#cce7ff",
+                            selectforeground="#000000")
         self.scroll.numberLines.configure(bg='#eaeaea')
     else:
       customtkinter.set_appearance_mode("Dark")
       if not self.welcome:
         self.scroll.text.configure(bg='#2b2b2b', foreground="#d1dce8",
                             insertbackground='white',
-                            selectbackground="blue",)
+                            selectbackground="blue",
+                            selectforeground="#d1dce8")
         self.scroll.numberLines.configure(bg='#313335')
         
 
@@ -537,13 +539,15 @@ class IDE():
     if customtkinter.get_appearance_mode() == "Dark":
         self.scroll.text.configure(bg='#2b2b2b', foreground="#d1dce8",
                             insertbackground='white',
-                            selectbackground="blue",)
+                            selectbackground="blue",
+                            selectforeground="#d1dce8")
         self.scroll.numberLines.configure(bg='#313335')
 
     else:
         self.scroll.text.configure(bg='#f5f5f5', foreground="#000000",
                             insertbackground='black',
-                            selectbackground="#cce7ff")
+                            selectbackground="#cce7ff",
+                            selectforeground="#000000")
         self.scroll.numberLines.configure(bg='#eaeaea')
 
     self.scroll.text.bind("<KeyRelease>", self.on_text_change)
