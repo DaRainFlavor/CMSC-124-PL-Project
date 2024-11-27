@@ -15,11 +15,12 @@ class Compiler:
     self.currentLexemeToken()
 
 
-    self.mipsData = ".data\n.align 2\n.align 2\n"
+    self.mipsData = ".data\n"
     self.mipsCode = "\n.text\n.globl main\nmain:\n\n"
     self.subroutine = {}
 
-    self.stackAllocated = {}
+    self.scope = 0
+    self.scopeCounter = 0
 
     self.keepTranslating = True # turns false when it's giving is encountered outside if-else statements
     self.success = False
@@ -476,14 +477,15 @@ class Compiler:
       raise SyntaxError(f"Error in line {self.line}: Expected {token} but found {self.currentToken}")
 ############# SYMBOL TABLE #############
   def isInScope(self, varName):
-    scope = len(self.stackAllocated) - 1
+    scope = self.scope
     if((varName, scope) in self.symbol_table):
       return True
     return False
 
   def insertSymbol(self, varName, datatype):
-    scope = len(self.stackAllocated) - 1
-    self.symbol_table[varName, scope] = {"datatype": datatype, "value": False, "stack": self.stack}
+    if(self.scope>0):
+      self.stack+=1
+    self.symbol_table[varName, self.scope] = {"datatype": datatype, "value": False, "stack": self.stack}
 
   def isInSymbolTable(self, varName):
     self.getScope(varName)
@@ -493,8 +495,8 @@ class Compiler:
     self.symbol_table[varName, scope]["value"] = True
   
   def getScope(self, varName):
-    scope = len(self.stackAllocated) - 1
-    while(scope>=-1): 
+    scope = self.scope
+    while(scope>=0): 
       if((varName, scope) in self.symbol_table):
         return scope
       scope-=1
@@ -528,12 +530,12 @@ class Compiler:
 ############## TRANSLATORS #############
   def translateReturn(self):
     if(not self.keepTranslating): return 
-    self.mipsCode += f"\n# end\nli $v0, 10\nsyscall"
+    self.mipsCode += f"\n# end\nli $v0, 10\nsyscall\n"
     if(self.keepTranslating and self.stack==-1):
       self.keepTranslating = False
   
   def translateDeclaration(self, datatype, varName):
-    if(self.getScope(varName) == -1):
+    if(self.getScope(varName) == 0):
       if (datatype == "CLOUT"):
         self.mipsData+=(f"{varName}: .word 0\n")
       elif (datatype == "SIGMA"):
@@ -619,16 +621,16 @@ class Compiler:
     firstLine = ""
     secondLine = ""
     if(varName1Type == "SLAY"):
-      if('$' in varName or self.getScope(varName) == -1):
+      if('$' in varName or self.getScope(varName) == 0):
         self.translateString(varName, '\\n')
         return
     elif (varName1Type == 'SIGMA_LITERAL'):
-      if('$' in varName or self.getScope(varName) == -1):
+      if('$' in varName or self.getScope(varName) == 0):
         self.translateString(varName, varName1[1:-1])
         return
       return
     else:
-      if('$' in varName or self.getScope(varName) == -1): # change this, this is both global
+      if('$' in varName or self.getScope(varName) == 0): # change this, this is both global
         self.copyString(varName1, varName)
         return
       return
@@ -640,11 +642,11 @@ class Compiler:
     if operator == '*': operator = 'mul'
     if operator == '/': operator = 'div'
 
-    varName1Scope = -1
+    varName1Scope = 0
     if not '$' in varName1:
       varName1Scope = self.getScope(varName1)
-    varName2Scope = ""
-    varName3Scope = ""
+    varName2Scope = 'e'
+    varName3Scope = 'e'
     print(f"type: {varName1Type}")
     print(f"scope: {varName2Type}")
     if varName2Type == 'IDENTIFIER':
@@ -653,17 +655,17 @@ class Compiler:
     if varName3Type == 'IDENTIFIER':
       print("b")
       varName3Scope = self.getScope(varName3)
-    if varName2Scope:
+    if varName2Scope != 'e':
       print("OOOOOOOOOOOO")
-      if varName2Scope == -1:
+      if varName2Scope == 0:
         self.mipsCode+=f"lw $t0, {varName2}\n"
     else:
       print("JJJJJJJJJJJJJJJ")
       self.mipsCode+=f"li $t0, {int(varName2)}\n"
     
     print(f"SCCCC: {varName3Scope}")
-    if varName3Scope:
-      if varName3Scope == -1:
+    if varName3Scope != 'e':
+      if varName3Scope == 0:
         self.mipsCode+=f"lw $t1, {varName3}\n"
     else:
       print("HEYYYY")
@@ -680,7 +682,7 @@ class Compiler:
       else:
         self.mipsCode+=f"{operator} $t2, $t0, $t1\n"
     
-    if varName1Scope == -1 and not '$' in varName1:
+    if varName1Scope == 0 and not '$' in varName1:
       self.mipsCode+=f"sw $t2, {varName1}\n\n"
 
   def translateStringtoA(self, strValue, n):
@@ -728,8 +730,8 @@ class Compiler:
     filtered3 = varName3.replace('\n', '#')
     self.mipsCode+=f"# {varName1} = {filtered2}{operator}{filtered3}\n"
     #varName1Scope = self.getScope(varName1)
-    varName2Scope = ""
-    varName3Scope = ""
+    varName2Scope = 'e'
+    varName3Scope = 'e'
     if varName2Type == 'IDENTIFIER':
       varName2Scope = self.getScope(varName2)
     if varName3Type == 'IDENTIFIER':
@@ -740,16 +742,16 @@ class Compiler:
     else:
       self.mipsCode+=f"li $v0, 9\nli $a0, 1024\nsyscall\nmove $a2, $v0\nmove $t2, $a2\n\n"
 
-    if varName3Scope:
-      if varName3Scope == -1:
+    if varName3Scope != 'e':
+      if varName3Scope == 0:
         self.mipsCode+=f"la $a1, {varName3}\n"
     else:
       if(varName3 == 'slay'):
         self.translateStringtoA('\\n', 1)  
       else: self.translateStringtoA(varName3[1:-1], 1)
 
-    if varName2Scope:
-      if varName2Scope == -1:
+    if varName2Scope != 'e':
+      if varName2Scope == 0:
         self.mipsCode+=f"la $a0, {varName2}\n"
     else:
       if(varName2 == 'slay'):
@@ -888,6 +890,7 @@ class Compiler:
     self.parseVariableListPrime(datatype)
 
   def parseVariable(self, datatype):
+    print("HEHEHEHEHHEHEHEHEH")
     # <Variable> ::= 'IDENTIFIER' <Variable_prime>
     varName = self.currentLexeme
     self.match('IDENTIFIER')
@@ -1050,7 +1053,9 @@ class Compiler:
     if(self.getType(lexeme) == "CLOUT"):
       self.mipsCode+=f"\n# add scanning flag § (167)\nli $a0, 167\nli $v0, 11\nsyscall\n\n# scan {lexeme}\nli $v0, 5\nsyscall\nsw $v0, {lexeme}\n"
     if(self.getType(lexeme) == "SIGMA"):
-      self.mipsCode+=f"\n# add scanning flag § (167)\nli $a0, 167\nli $v0, 11\nsyscall\n\n# scan {lexeme}\nli $v0, 8\nla $a0, {lexeme}\nli $a1, 1024\nsyscall\n"
+      self.mipsCode+=f"\n# add scanning flag § (167)\nli $a0, 167\nli $v0, 11\nsyscall\n\n# scan {lexeme}\nli $v0, 8\nla $a0, {lexeme}\nli $a1, 1024\nsyscall\n# Remove newline from {lexeme}\nla $a0, {lexeme}\njal remove_newline\n"
+      if(not "remove_newline" in self.subroutine):
+        self.subroutine["remove_newline"] = f"\nremove_newline:\nlb $t0, 0($a0)\nbeq $t0, $zero, done\nli $t1, 10\nbeq $t0, $t1, replace\naddi $a0, $a0, 1\nj remove_newline\n\nreplace:\nli $t0, 0\nsb $t0, 0($a0)\n\ndone:\njr $ra\n\n"
     self.parseScanPrime()
     self.match('SEMICOLON')
 
@@ -1079,6 +1084,7 @@ class Compiler:
     self.parseBlock()
     self.parseElseIf()
     self.parseElse()
+    self.scope = 0
 
   def parseElseIf(self):
     #<Else_if> ::= 'WHAT' 'IF' <Condition> <Block> <Else_if> | ε
@@ -1136,10 +1142,46 @@ class Compiler:
     else: return
 
   def parseBlock(self):
+    self.scopeCounter+=1
+    self.scope = self.scopeCounter
     # <Block> ::= 'OPEN_CURLY_BRACE' <Program> 'CLOSE_CURLY_BRACE' | <Statement>
     if(self.currentToken == 'OPEN_CURLY_BRACES'):
       self.match('OPEN_CURLY_BRACES')
-      self.parseProgram()
+      self.parseBlockProgram()
       self.match('CLOSE_CURLY_BRACES')
     else:
-      self.parseStatement()
+      self.parseBlockStatement()
+    self.stack = -1 # MIPS stack should be empty here
+
+  def parseBlockProgram(self):
+    # <Block_program> ::= <Block_statement> <Block_program> | 'SEMICOLON' <Block_program> | ε
+    if self.currentToken == "$":
+      return
+    if self.currentToken == 'SEMICOLON':
+      self.match('SEMICOLON')
+      self.parseBlockProgram()
+    elif self.currentToken in ['IDENTIFIER', 'CLOUT', 'SIGMA', 'IDENTIFIER', 'YAP', 'SPILL', "IT'S"]:
+      self.parseBlockStatement()
+      self.parseBlockProgram()
+    elif self.currentToken in ['LET', 'SLAY', 'SIGMA_LITERAL', 'COOKED', 'CLOUT_LITERAL', 'WHAT', 'PLUS', 'MINUS', "MULTIPLY", "DIVIDE", "EQUAL", "NOT", "IF", "GREATER_THAN", "LESS_THAN", "OPEN_PARENTHESIS", "CLOSE_PARENTHESIS", "OPEN_CURLY_BRACE", "CLOSE_CURLY_BRACE"]:
+      self.debugUnexpectedKeyword(self.currentLexeme)
+    else: return # for ε
+
+  def parseBlockStatement(self):
+    # <Block_statement> ::= <Declaration> | <Assignment> | <Print> | <Scan> | "IT'S" "GIVING" | "SEMICOLON"
+    if self.currentToken in ['CLOUT', 'SIGMA']:
+      self.parseDeclaration()
+    elif self.currentToken == 'IDENTIFIER':
+      self.parseAssignment()
+    elif self.currentToken == 'YAP':
+      self.parsePrint()
+    elif self.currentToken == 'SPILL':
+      self.parseScan()
+    elif self.currentToken == "IT'S":
+      self.match("IT'S")
+      self.match("GIVING")
+      self.translateReturn()
+    elif self.currentToken == 'SEMICOLON':
+      self.match('SEMICOLON')
+    else:
+      self.debugUnexpectedKeyword(self.currentLexeme)

@@ -1,5 +1,5 @@
 <Program> ::= <Statement> <Program> | 'SEMICOLON' <Program> | ε
-<Statement> ::= <Declaration> | <Assignment> | <If> | <Print> | <Scan> | "IT'S" "GIVING"
+<Statement> ::= <Declaration> | <Assignment> | <if> | <Print> | <Scan> | "IT'S" "GIVING" | "SEMICOLON"
 <Declaration> ::= <Data_type> <Variable_list> 'SEMICOLON'
 <Data_type> ::= 'CLOUT' | 'SIGMA'
 <Variable_list> ::= <Variable> <Variable_list_prime>
@@ -20,7 +20,11 @@
 <Less> ::= 'LESS_THAN' <Relational_prime>
 <Great> ::= 'GREATER_THAN' <Relational_prime>
 <Relational_prime> ::= 'EQUAL' | ε
-<Block> ::= 'OPEN_CURLY_BRACE' <Program> 'CLOSE_CURLY_BRACE' | <Statement>
+<Block> ::= 'OPEN_CURLY_BRACE' <Block_program> 'CLOSE_CURLY_BRACE' | <Statement>
+
+<Block_program> ::= <Block_statement> <Block_program> | 'SEMICOLON' <Block_program> | ε
+<Block_statement> ::= <Declaration> | <Assignment> | <Print> | <Scan> | "IT'S" "GIVING" | "SEMICOLON"
+
 <Print> ::= 'YAP' 'LESS_THAN' 'LESS_THAN' <Expression> <Print_prime> 'SEMICOLON'
 <Print_prime> ::= 'LESS_THAN' 'LESS_THAN' <Expression> <Print_prime>
 <Scan> ::= 'SPILL' 'GREATER_THAN' 'GREATER_THAN' 'IDENTIFIER' <Scan_prime> 'SEMICOLON'
