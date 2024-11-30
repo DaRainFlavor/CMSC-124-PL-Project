@@ -25,17 +25,16 @@ class Compiler:
     self.keepTranslating = True # turns false when it's giving is encountered outside if-else statements
     self.success = False
 
-    self.terminalParsingResult = "HEHE"
+    self.terminalParsingResult = None
     try:
       self.parseProgram()
       print("\nMIPS:\n")
       print(self.mipsData+self.mipsCode)
       for value in self.subroutine.values():
         print(value)
-      print(f"\n# Exit the program\nli $v0, 10\nsyscall")
+      print(f"\n# Exit the program\n\n# add flag § (167)\nli $a0, 167\nli $v0, 11\nsyscall\n# return code: 1\nli $v0, 1\nli $a0, 1\nsyscall\nli $v0, 10\nsyscall\n\n")
       print("\nSYMBOL TABLE:\n")
       print(self.symbol_table)
-      self.terminalParsingResult = "Parsing completed successfully.\n"
       self.success = True
     except SyntaxError as e:
       self.terminalParsingResult = f"{e}\n"
@@ -43,7 +42,7 @@ class Compiler:
        
   def getFinalMIPS(self):
     self.mipsData+=self.mipsCode
-    self.mipsData+=f"\n# Exit the program\nli $v0, 10\nsyscall\n\n"
+    self.mipsData += f"\n# Exit the program\n\n# add flag § (167)\nli $a0, 167\nli $v0, 11\nsyscall\n# return code: 1\nli $v0, 1\nli $a0, 1\nsyscall\nli $v0, 10\nsyscall\n\n"
     for value in self.subroutine.values():
       self.mipsData+=value
     print(self.mipsData)
@@ -530,7 +529,7 @@ class Compiler:
 ############## TRANSLATORS #############
   def translateReturn(self):
     if(not self.keepTranslating): return 
-    self.mipsCode += f"\n# end\nli $v0, 10\nsyscall\n"
+    self.mipsCode += f"\n# end\n\n# add flag § (167)\nli $a0, 167\nli $v0, 11\nsyscall\n# return code: 1\nli $v0, 1\nli $a0, 1\nsyscall\nli $v0, 10\nsyscall\n\n"
     if(self.keepTranslating and self.stack==-1):
       self.keepTranslating = False
   
@@ -672,6 +671,11 @@ class Compiler:
       self.mipsCode+=f"li $t1, {int(varName3)}\n"
 
     if operator == 'div':
+      self.mipsCode+="# Check division by zero\nbeq $t1, $zero, division_by_zero\n"
+      if(not "division_by_zero" in self.subroutine):
+        self.subroutine["division_by_zero"] = "# Division by zero handling flag §\ndivision_by_zero:\nli $a0, 167\nli $v0, 11\nsyscall\n# return code: 2\nli $v0, 1\nli $a0, 2\nsyscall\nli $v0, 10\nsyscall\n\n"
+
+        
       if '$' in varName1:
         self.mipsCode+=f"div $t0, $t1\nmflo {varName1}\n"  
       else:
@@ -1051,9 +1055,9 @@ class Compiler:
     self.updateSymbolTableValue(lexeme)
     
     if(self.getType(lexeme) == "CLOUT"):
-      self.mipsCode+=f"\n# add scanning flag § (167)\nli $a0, 167\nli $v0, 11\nsyscall\n\n# scan {lexeme}\nli $v0, 5\nsyscall\nsw $v0, {lexeme}\n"
+      self.mipsCode+=f"\n# add scanning flag § (167)\nli $a0, 167\nli $v0, 11\nsyscall\n# return code: 0\nli $v0, 1\nli $a0, 0\nsyscall\n\n# scan {lexeme}\nli $v0, 5\nsyscall\nsw $v0, {lexeme}\n"
     if(self.getType(lexeme) == "SIGMA"):
-      self.mipsCode+=f"\n# add scanning flag § (167)\nli $a0, 167\nli $v0, 11\nsyscall\n\n# scan {lexeme}\nli $v0, 8\nla $a0, {lexeme}\nli $a1, 1024\nsyscall\n# Remove newline from {lexeme}\nla $a0, {lexeme}\njal remove_newline\n"
+      self.mipsCode+=f"\n# add scanning flag § (167)\nli $a0, 167\nli $v0, 11\nsyscall\n# return code: 0\nli $v0, 1\nli $a0, 0\nsyscall\n\n# scan {lexeme}\nli $v0, 8\nla $a0, {lexeme}\nli $a1, 1024\nsyscall\n# Remove newline from {lexeme}\nla $a0, {lexeme}\njal remove_newline\n"
       if(not "remove_newline" in self.subroutine):
         self.subroutine["remove_newline"] = f"\nremove_newline:\nlb $t0, 0($a0)\nbeq $t0, $zero, done\nli $t1, 10\nbeq $t0, $t1, replace\naddi $a0, $a0, 1\nj remove_newline\n\nreplace:\nli $t0, 0\nsb $t0, 0($a0)\n\ndone:\njr $ra\n\n"
     self.parseScanPrime()
@@ -1069,9 +1073,9 @@ class Compiler:
       self.isInSymbolTable(lexeme)
       self.updateSymbolTableValue(lexeme)
       if(self.getType(lexeme) == "CLOUT"):
-        self.mipsCode+=f"\n# add scanning flag § (167)\nli $a0, 167\nli $v0, 11\nsyscall\n\n# scan {lexeme}\nli $v0, 5\nsyscall\nsw $v0, {lexeme}\n"
+        self.mipsCode+=f"\n# add scanning flag § (167)\nli $a0, 167\nli $v0, 11\nsyscall\n# return code: 0\nli $v0, 1\nli $a0, 0\nsyscall\n\n# scan {lexeme}\nli $v0, 5\nsyscall\nsw $v0, {lexeme}\n"
       if(self.getType(lexeme) == "SIGMA"):
-        self.mipsCode+=f"\n# add scanning flag § (167)\nli $a0, 167\nli $v0, 11\nsyscall\n\n# scan {lexeme}\nli $v0, 8\nla $a0, {lexeme}\nli $a1, 1024\nsyscall\n"
+        self.mipsCode+=f"\n# add scanning flag § (167)\nli $a0, 167\nli $v0, 11\nsyscall\n# return code: 0\nli $v0, 1\nli $a0, 0\nsyscall\n\n# scan {lexeme}\nli $v0, 8\nla $a0, {lexeme}\nli $a1, 1024\nsyscall\n"
       self.parseScanPrime()
     else: return
 
