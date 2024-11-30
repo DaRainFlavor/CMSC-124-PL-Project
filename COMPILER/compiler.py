@@ -10,9 +10,7 @@ class Compiler:
     self.lexer_table = {}
     self.symbol_table = {}
 
-    self.preprocessor()
     self.currentToken = self.currentLexeme = None
-    self.currentLexemeToken()
 
 
     self.mipsData = ".data\n"
@@ -27,6 +25,8 @@ class Compiler:
 
     self.terminalParsingResult = None
     try:
+      self.preprocessor()
+      self.currentLexemeToken()
       self.parseProgram()
       print("\nMIPS:\n")
       print(self.mipsData+self.mipsCode)
@@ -63,37 +63,49 @@ class Compiler:
     # NFA ALPHABET (COLUMN)
     # (0) "
     # (1) /
-    # (2) \
-    # (3) \n
+    # (2) \n
+    # (3) *
     # (4) other symbols
 
     table = [
-              [1,4,0,0,0],
-              [0,1,2,1,1],
-              [3,1,1,1,1],
-              [1,1,1,1,1],
-              [0,5,0,0,0],
-              [6,6,6,0,6],
-              [6,6,6,0,6]
+              [1,2,0,0,0],
+              [0,1,1,1,1],
+              [0,3,0,5,0],
+              [4,4,0,4,4],
+              [4,4,0,4,4],
+              [6,6,7,8,6],
+              [6,6,7,8,6],
+              [6,6,7,8,6],
+              [6,9,7,8,6],
+              [0,2,0,0,0]
             ]
     index = 0
     state = 0
+    multipleCommentStart = None;
     while(index < len(self.code)):
       type = 4
       if self.code[index] == "\"": type = 0
       elif self.code[index] == "/": type = 1
-      elif self.code[index] == "\\": type = 2
-      elif self.code[index] == "\n": type = 3
+      elif self.code[index] == "\n": type = 2
+      elif self.code[index] == "*": type = 3
       state = table[state][type]
-      if(state == 5):
+      if(state in [3, 5]):
+        if state == 5:
+          print("DIRI")
         self.code = self.code[:index] + self.code[index+1:]
         self.code = self.code[:index-1] + self.code[index:]
         index-=2
-      if state == 6:
+      if state in [4, 6, 8, 9]:
         self.code = self.code[:index] + self.code[index+1:]
         index-=1
 
       index+=1
+    if state in [5, 6, 7, 8]:
+      self.debugger(5)
+
+    print(self.code)
+    print(self.line)
+    self.idx = 0
 
   def debugger(self, errorNumber, index=None):
     if index is None:
@@ -134,7 +146,11 @@ class Compiler:
     if errorNumber == 2: # use of §
       if word == "§": raise SyntaxError(f"Skibidi in Toilet {self.line}: you can't rizz `§`.")
       else: raise SyntaxError(f"Skibidi in Toilet {self.line}: you can't rizz `§`. Yeet in `{word}`")
-    pass
+    if errorNumber == 4: # inavlid use of \
+       raise SyntaxError(f"Error in line {self.line}: Invalid use of `\\` in `\\{self.code[self.idx]}`.")
+    if errorNumber == 5: # Missing closing comment
+       raise SyntaxError(f"Error in line {self.line}: Missing closing comment.")
+
 
   def handle_token(self, char, token_name):
     self.lexer_table[char] = token_name
@@ -143,6 +159,7 @@ class Compiler:
     return char, token_name
 
   def scanFSMs(self):
+    print(f"line: {self.line}")
     # Check for keywords
     nfa = {
       0: {
@@ -348,13 +365,13 @@ class Compiler:
       return "", "$"
 
   def DFAStringVal(self, state):    
-    # NFA ALPHABET (COLUMN)
+    # DFA ALPHABET (COLUMN)
     # (0) "
     # (1) \
     # (2) n
     # (3) t
-    # (2) §
-    # (3) other symbols
+    # (4) §
+    # (5) other symbols
 
     table = [
               [1,6,6,6,6,6],
@@ -369,7 +386,7 @@ class Compiler:
     stop_chars = {"§"}
     lexeme = ""
     while self.idx < len(self.code) and self.code[self.idx] not in stop_chars:
-      type = 3
+      type = 5
       current = self.code[self.idx]
       if state == 5 and current in " ;{}()<>,§+-*=\n":
         self.idx-=1
@@ -377,10 +394,14 @@ class Compiler:
       lexeme+=current
       if(current == "\""): type = 0
       elif(current == "\\"): type = 1
-      elif(current == "§"): type = 2
+      elif(current == "n"): type = 2
+      elif(current == "t"): type = 3
+      elif(current == "§"): type = 4
       
-
+      oldState = state
       state = table[state][type]
+      if oldState == 2 and state == 6:
+        self.debugger(4)
       self.idx+=1
     if(self.idx<len(self.code) and self.code[self.idx] == '§'):
       self.debugger(2)
@@ -431,8 +452,11 @@ class Compiler:
 
   def scanner(self):
     char = self.code[self.idx]
+    print("Kuan")
+    print(self.code)
     while(self.idx < len(self.code) and (char == " " or char == "\n" or char == "\t")):
-      if(char == "\n"): self.line+=1
+      if(char == "\n"): 
+        self.line+=1
       self.idx+=1
       if self.idx < len(self.code): char = self.code[self.idx]
     if self.idx >= len(self.code):
