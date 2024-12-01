@@ -1312,7 +1312,7 @@ class Compiler:
     self.parseBlock()
     self.parseElseIf()
     self.parseElse()
-    if not self.hasElse or not self.hasElseIf:
+    if (not self.hasElse and self.hasElseIf) or (not self.hasElse and not self.hasElseIf):
       self.mipsCode += "j END_IF"
     self.mipsCode += f"\n{self.ifMips}\n\nEND_IF:\n"
     self.scope = 0
