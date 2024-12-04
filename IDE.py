@@ -19,6 +19,7 @@ class IDE():
     self.welcome = False
     self.flash = True
     self.is_running = False
+    self.is_listening = False
     self.filepath=None
 
     self.root.bind_all("<Control-s>", lambda event: self.save_file())
@@ -114,6 +115,7 @@ class IDE():
     paste_image = customtkinter.CTkImage(Image.open("images/paste_image.png").resize((40, 40), Image.Resampling.LANCZOS))
     run_image = customtkinter.CTkImage(Image.open("images/run_image.png").resize((40, 40), Image.Resampling.LANCZOS))
     self.darklightmode_image = customtkinter.CTkImage(Image.open("images/darklightmode_image.png").resize((40, 40), Image.Resampling.LANCZOS))
+    ai_image = customtkinter.CTkImage(Image.open("images/ai_image.png").resize((40, 40), Image.Resampling.LANCZOS))
 
     # Create buttons for left side
     self.save_as_button = customtkinter.CTkButton(master=left_frame, image=save_as_image, text="", corner_radius=10, fg_color="#DDDCDD", state=tk.DISABLED, width=65, height=45, command=self.save_as_file)
@@ -128,6 +130,7 @@ class IDE():
     self.paste_button = customtkinter.CTkButton(master=right_frame, image=paste_image, text="", corner_radius=10, fg_color="#DDDCDD", state=tk.DISABLED, width=65, height=45, command=self.paste)
     self.darklightmode_button = customtkinter.CTkButton(master=right_frame, image = self.darklightmode_image, text="", corner_radius=10, fg_color="White", width=65, height=45, command=self.toggle_modes)
     self.run_button = customtkinter.CTkButton(master=right_frame, image=run_image, text="", corner_radius=10, fg_color="#DDDCDD", state=tk.DISABLED, width=65, height=45, command=self.run)
+    self.ai_button = customtkinter.CTkButton(master=right_frame, image=ai_image, text="", corner_radius=10, fg_color="#DDDCDD", state=tk.DISABLED, width=65, height=45, command=self.ai)
 
     # Position buttons in the left frame
     self.save_as_button.grid(row=0, column=0, padx=5, pady=5, sticky="ns")
@@ -141,7 +144,8 @@ class IDE():
     self.cut_button.grid(row=0, column=2, padx=5, pady=5, sticky="ns")
     self.paste_button.grid(row=0, column=3, padx=5, pady=5, sticky="ns")
     self.darklightmode_button.grid(row=0, column=4, padx=5, pady=5, sticky="ns")
-    self.run_button.grid(row=0, column=5, padx=5, pady=5, sticky="ns")
+    self.ai_button.grid(row=0, column=5, padx=5, pady=5, sticky="ns")
+    self.run_button.grid(row=0, column=6, padx=5, pady=5, sticky="ns")
 
     # Add tooltips
     CustomTooltipLabel(anchor_widget=self.save_as_button, text="Save As")
@@ -153,6 +157,7 @@ class IDE():
     CustomTooltipLabel(anchor_widget=self.cut_button, text="Cut")
     CustomTooltipLabel(anchor_widget=self.paste_button, text="Paste")
     CustomTooltipLabel(anchor_widget=self.run_button, text="Run")
+    CustomTooltipLabel(anchor_widget=self.ai_button, text="Code With AI")
     CustomTooltipLabel(anchor_widget=self.darklightmode_button, text="Change Theme")
 
     # Position left and right frames inside the main frame
@@ -422,7 +427,14 @@ class IDE():
     self.terminal_frame.destroy()
     self.is_running = False
 
+  def close_ai(self):
+    self.clear(self.ai_frame)
+    self.ai_frame.destroy()
+    self.is_listening = False
+
   def run(self):
+    if self.is_listening:
+      self.close_ai()
     if self.is_running:
       self.close_terminal()
     self.is_running = True
@@ -473,7 +485,38 @@ class IDE():
   #   except Exception as e:
   #       self.terminal.delete(1.0, tk.END)  # Clear the text
   #       self.terminal.insert(tk.END, "\nError: MARS is not installed or not found in your system's PATH.\n")
+
+  def ai(self):
+    if self.is_running:
+      self.close_terminal()
+    if self.is_listening:
+      self.close_ai()
+    self.is_listening = True
+    # self.save_file()
     
+    # Create the frame for the Text widget and line numbers
+    self.ai_frame = customtkinter.CTkFrame(self.itemFrame, fg_color="transparent")
+    self.ai_frame.grid(row=1, column=1, sticky='nsew')
+
+    # Make the frame expand to fill available space
+    self.ai_frame.grid_rowconfigure(1, weight=1)
+    self.ai_frame.grid_columnconfigure(0, weight=1)
+
+    close_ai_button = customtkinter.CTkButton(self.ai_frame, text="X", width=50, command=self.close_ai)
+    # close_terminal_button.grid(row=0, column=0, sticky='ne', padx=5, pady=5)
+    close_ai_button.pack(anchor = "e", padx=5, pady=5)
+    CustomTooltipLabel(anchor_widget=close_ai_button, text="Close")
+
+    # # Create and add the scrollable text widget
+    # self.terminal = customtkinter.CTkTextbox(self.terminal_frame, wrap="word", font=("Arial", 12), width=500)
+    # self.terminal.grid(row=1, column=0, sticky='nsew')
+    # self.terminal.insert("1.0", "Compiling...")
+    
+    self.ai = AIJavaProcessInterface(self.ai_frame, self)
+    # self.ai.start_java_process(self.filepath)
+
+  def insertTextToScroll(self, text):
+    self.scroll.insert(tk.END, text)
 
   def on_text_change(self, event=None):
     # print(f"{self.scroll.get(1.0, tk.END)[:-1] == self.default_text}, {self.filepath == None}")
@@ -559,7 +602,7 @@ class IDE():
     self.scroll.text.edit_reset()  # Clear undo/redo history
     self.scroll.text.edit_modified(False)  # Reset the modified state
     self.update_button_state(disable=[self.undo_button, self.redo_button])  # Disable undo/redo buttons
-    self.update_button_state({self.run_button}, {})
+    self.update_button_state({self.run_button, self.ai_button}, {})
     self.can_paste()
     # Redraw line numbers after 200ms
     self.text_frame.after(200, self.scroll.redraw())

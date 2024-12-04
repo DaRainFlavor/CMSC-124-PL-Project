@@ -3,3 +3,8 @@ customtkinter
 pillow
 Custom-Tooltip --upgrade
 #python -m pip
+# python.exe -m pip install --upgrade pip
+-U google-generativeai
+pyttsx3
+SpeechRecognition
+pyaudio
