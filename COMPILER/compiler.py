@@ -646,7 +646,7 @@ class Compiler:
       varNameStack*=4
       # print(f"varname: {varName} self.stack: {self.stack}")
       # print(self.symbol_table)
-      secondLine = f"sw $t0, {varNameStack * 4}($sp)\n"
+      secondLine = f"sw $t0, {varNameStack}($sp)\n"
     if not self.isInIf and not self.isInIfCondition:
       self.mipsCode+=(firstLine+secondLine+"\n")
     else:
@@ -657,9 +657,9 @@ class Compiler:
     if '$' in assignedTo:
       storage = assignedTo
     else:
-      if not self.isInIf:
+      if not self.isInIf or self.isInIfCondition:
         self.mipsCode+=f"la $a0, {assignedTo}\n"
-      else: 
+      elif self.isInIf and not self.isInIfCondition: 
         self.ifMips+=f"la $a0, {assignedTo}\n"
     stack = 0
     slash = 0
@@ -685,35 +685,35 @@ class Compiler:
       if(char == '\t'): comment ="\\t"
       if(char == '\"'): comment ="\""
 
-      if not self.isInIf:
+      if not self.isInIf or self.isInIfCondition:
         self.mipsCode+=f"li $t0, {ord(char)}\t# '{comment}'\nsb $t0, {stack}({storage})\n"
-      else:
+      elif self.isInIf and not self.isInIfCondition:
         self.ifMips+=f"li $t0, {ord(char)}\t# '{comment}'\nsb $t0, {stack}({storage})\n"
       stack+=1
-    if not self.isInIf:
+    if not self.isInIf or self.isInIfCondition:
       self.mipsCode+=f"# add null terminator\nli $t0, 0\nsb $t0, {stack}({storage})\n\n"
-    else:
+    elif self.isInIf and not self.isInIfCondition:
       self.ifMips+=f"# add null terminator\nli $t0, 0\nsb $t0, {stack}({storage})\n\n"
 
   def copyString(self, source, copyTo): # copyTo = source
     if(not "string_copy" in self.subroutine):
       self.subroutine["string_copy"] = f"string_copy:\ncopy_loop:\nlb $t0, 0($a0)\nsb $t0, 0($a1)\nbeq $t0, $zero, copy_done\naddi $a0, $a0, 1\naddi $a1, $a1, 1\nj copy_loop\n\ncopy_done:\njr $ra\n"
     if '$' in copyTo:
-      if not self.isInIf:
+      if not self.isInIf or self.isInIfCondition:
         self.mipsCode+=f"la $a0, {source}\nmove $a1, {copyTo}\njal string_copy\n\n"
-      else:
+      elif self.isInIf and not self.isInIfCondition:
         self.ifMips+=f"la $a0, {source}\nmove $a1, {copyTo}\njal string_copy\n\n"
     else:
-      if not self.isInIf:
+      if not self.isInIf or self.isInIfCondition:
         self.mipsCode+=f"la $a0, {source}\nla $a1, {copyTo}\njal string_copy\n\n"
-      else:
+      elif self.isInIf and not self.isInIfCondition:
         self.ifMips+=f"la $a0, {source}\nla $a1, {copyTo}\njal string_copy\n\n"
 
   def translateStringAssigment(self, varName, varName1, varName1Type):
     filtered1 = varName1.replace('\n', '#')
-    if not self.isInIf:
+    if not self.isInIf or self.isInIfCondition:
       self.mipsCode+=f"# {varName} = {filtered1}\n"
-    else:
+    elif self.isInIf and not self.isInIfCondition:
       self.ifMips+=f"# {varName} = {filtered1}\n"
     firstLine = ""
     secondLine = ""
@@ -735,10 +735,11 @@ class Compiler:
   def translateIntComp(self, varName1, varName1Type, varName2, varName2Type, operator, varName3, varName3Type):
     if not self.isInIf:
       self.mipsCode+=f"# {varName1} = {varName2}{operator}{varName3}\n"
-    elif self.isInIf:
-      self.ifMips+=f"# {varName1} = {varName2}{operator}{varName3}\n"
     elif self.isInIfCondition:
       self.ifConditionMips+=f"# {varName1} = {varName2}{operator}{varName3}\n"
+    elif self.isInIf:
+      self.ifMips+=f"# {varName1} = {varName2}{operator}{varName3}\n"
+    
     if operator == '+': operator = 'add'
     if operator == '-': operator = 'sub'
     if operator == '*': operator = 'mul'
@@ -759,10 +760,10 @@ class Compiler:
     if varName2Scope != 'e':
       print("OOOOOOOOOOOO")
       if varName2Scope == 0:
-        if not self.isInIf and not self.isInIfCondition:
+        if not self.isInIf or self.isInIfCondition:
           self.mipsCode+=f"lw $t0, {varName2}\n"
           print("or ditooo")
-        else:
+        elif self.isInIf and not self.isInIfCondition: 
           self.ifMips += f"lw $t0, {varName2}\n"
     else:
       print("JJJJJJJJJJJJJJJ")
@@ -770,68 +771,74 @@ class Compiler:
         self.mipsCode+=f"li $t0, {int(varName2)}\n"
       # elif self.isInIfCondition:
       #   self.ifConditionMips+=f"li $t0, {int(varName2)}\n"
-      elif self.isInIf: 
+      elif self.isInIf and not self.isInIfCondition: 
         self.ifMips+=f"li $t0, {int(varName2)}\n"
       
     
     print(f"SCCCC: {varName3Scope}")
     if varName3Scope != 'e':
       if varName3Scope == 0:
-        if not self.isInIf and not self.isInIfCondition:
+        if not self.isInIf or self.isInIfCondition:
           self.mipsCode+=f"lw $t1, {varName3}\n"
-        else:
+        elif self.isInIf and not self.isInIfCondition:
           self.ifMips+=f"lw $t1, {varName3}\n"
     else:
       print("HEYYYY")
-      if not self.isInIf or self.isInIfCondition:
+      if not self.isInIf or (self.isInIfCondition and varName1 != '$a0'):
         self.mipsCode+=f"li $t1, {int(varName3)}\n"
       # elif self.isInIfCondition:
       #   self.ifCondition+=f"li $t1, {int(varName3)}\n"
-      elif self.isInIf:
+      elif self.isInIf and not self.isInIfCondition:
         self.ifMips+=f"li $t1, {int(varName3)}\n"
       
     if operator == 'div':
-      self.mipsCode+="# Check division by zero\nbeq $t1, $zero, division_by_zero\n"
+      if not self.isInIf and not self.isInIfCondition:
+        self.mipsCode+="# Check division by zero\nbeq $t1, $zero, division_by_zero\n"
+      else:
+        self.ifMips+="# Check division by zero\nbeq $t1, $zero, division_by_zero\n"
       if(not "division_by_zero" in self.subroutine):
         self.subroutine["division_by_zero"] = "# Division by zero handling flag §\ndivision_by_zero:\nli $a0, 167\nli $v0, 11\nsyscall\n# return code: 2\nli $v0, 1\nli $a0, 2\nsyscall\nli $v0, 10\nsyscall\n\n"
 
         
       if '$' in varName1:
-        if not self.isInIf or self.isInIfCondition:
+        if not self.isInIf or (self.isInIfCondition and varName1 != '$a0'):
           self.mipsCode+=f"div $t0, $t1\nmflo {varName1}\n"  
         # elif self.isInIfCondition:
         #   self.ifConditionMips+=f"div $t0, $t1\nmflo {varName1}\n"
-        elif self.isInIf:
-          self.ifMips+=f"div $t0, $t1\nmflo {varName1}\naddi $sp, $sp, -4\nsw $t2, 0($sp)\n"
+        elif self.isInIf and not self.isInIfCondition:
+          self.ifMips+=f"div $t0, $t1\nmflo {varName1}\n"
         
       else:
         if not self.isInIf or self.isInIfCondition:
           self.mipsCode+=f"div $t0, $t1\nmflo $t2\n"
-        else:
+        elif self.isInIf and not self.isInIfCondition:
           self.ifMips+=f"div $t0, $t1\nmflo $t2\naddi $sp, $sp, -4\nsw $t2, 0($sp)\n"
     else:
       if '$' in varName1:
-        if not self.isInIf or self.isInIfCondition:
+        if not self.isInIf or (self.isInIfCondition  and varName1 != '$a0'):
           self.mipsCode+=f"{operator} {varName1}, $t0, $t1\n"
         # elif self.isInIfCondition:
         #   self.ifConditionMips+=f"{operator} {varName1}, $t0, $t1\n"
-        elif self.isInIf:
-          self.ifMips+=f"{operator} {varName1}, $t0, $t1\naddi $sp, $sp, -4\nsw $t2, 0($sp)\n"
+        elif self.isInIf and not self.isInIfCondition:
+          self.ifMips+=f"{operator} {varName1}, $t0, $t1\n"
 
       else:
-        if not self.isInIf:
+        if not self.isInIf or self.isInIfCondition:
           self.mipsCode+=f"{operator} $t2, $t0, $t1\n"
-        else:
-          self.ifMips+=f"{operator} $t2, $t0, $t1\naddi $sp, $sp, -4\nsw $t2, 0($sp)\n"
+        elif self.isInIf and not self.isInIfCondition:
+          self.ifMips+=f"{operator} $t2, $t0, $t1\n"
     
-    if varName1Scope == 0 and not '$' in varName1:
+    if varName1Scope == 0 and not '$' in varName1 and not self.isInIf:
       self.mipsCode+=f"sw $t2, {varName1}\n\n"
-    # elif self.isInIfCondition:
-    #   self.mipsCode+=f"sw $t6, {varName1}\n\n"
+    elif '$' not in varName1 and self.isInIf and not self.isInIfCondition:
+      if varName1Scope == 0:
+        self.ifMips+=f"sw $t2, {varName1}\n\n"
+      else:
+        self.ifMips+=f"sw $t2, {self.getStackValue(varName1)}($sp)\n\n"
 
 
   def translateStringtoA(self, strValue, n):
-    if not self.isInIf and not self.isInIfCondition:
+    if not self.isInIf or self.isInIfCondition:
       self.mipsCode+=f"li $v0, 9\nli $a0, 1024\nsyscall\nmove $a{n}, $v0\n"
     elif self.isInIf and not self.isInIfCondition:
       # self.ifMips+="#2\n"
@@ -860,14 +867,14 @@ class Compiler:
       if(char == '\t'): comment ="\\t"
       if(char == '\"'): comment ="\""
 
-      if not self.isInIf:
+      if not self.isInIf or self.isInIfCondition:
         self.mipsCode+=f"li $t1, {ord(char)}\t# '{comment}'\nsb $t1, {stack}($a{n})\n"
-      else:
+      elif self.isInIf and not self.isInIfCondition:
         self.ifMips+=f"li $t1, {ord(char)}\t# '{comment}'\nsb $t1, {stack}($a{n})\n"
       stack+=1
-    if not self.isInIf:
+    if not self.isInIf or self.isInIfCondition:
       self.mipsCode+=f"# add null terminator\nli $t1, 0\nsb $t1, {stack}($a{n})\n\n"
-    else:
+    elif self.isInIf and not self.isInIfCondition:
       self.ifMips+=f"# add null terminator\nli $t1, 0\nsb $t1, {stack}($a{n})\n\n"
 
   def translateConcatenation(self):
@@ -1101,7 +1108,7 @@ class Compiler:
     self.match('IDENTIFIER')
     if self.isInScope(varName) and not self.isInIf:
       self.debugVariableRedeclaration(varName)
-    else:
+    elif self.scope == 0 or self.isInIf:
       print(f"meh: {self.stack} {self.scope}")
       self.insertSymbol(varName, datatype)
       self.translateDeclaration(datatype, varName)
@@ -1172,9 +1179,9 @@ class Compiler:
         elif self.isInIf and not self.isInIfCondition:
           self.ifMips+=f"li $v0, 1\nsyscall\n\n"
       if(varName == '$a2'):
-        if not self.isInIf:
+        if not self.isInIf or self.isInIfCondition:
           self.mipsCode+=f"move $a0, $t2\nli $v0, 4\nsyscall\n\n"
-        else:
+        elif self.isInIf and not self.isInIfCondition:
           self.ifMips+=f"move $a0, $t2\nli $v0, 4\nsyscall\n\n"
     print("here?")    
     if self.isInIfCondition:
