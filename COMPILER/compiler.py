@@ -41,17 +41,20 @@ class Compiler:
       self.preprocessor()
       self.currentLexemeToken()
       self.parseProgram()
-      print("\nMIPS:\n")
-      print(self.mipsData+self.mipsCode)
-      for value in self.subroutine.values():
-        print(value)
-      print(f"\n# Exit the program\n\n# add flag § (167)\nli $a0, 167\nli $v0, 11\nsyscall\n# return code: 1\nli $v0, 1\nli $a0, 1\nsyscall\nli $v0, 10\nsyscall\n\n")
-      print("\nSYMBOL TABLE:\n")
-      print(self.symbol_table)
       self.success = True
     except SyntaxError as e:
       self.terminalParsingResult = f"{e}\n"
       print(f"Syntax error: {e}")
+    
+    self.print_lexer_table()
+    print("\n\n")
+    self.print_symbol_table()
+
+    print("\n           MIPS\n")
+    print(self.mipsData+self.mipsCode)
+    for value in self.subroutine.values():
+      print(value)
+    print(f"\n# Exit the program\n\n# add flag § (167)\nli $a0, 167\nli $v0, 11\nsyscall\n# return code: 1\nli $v0, 1\nli $a0, 1\nsyscall\nli $v0, 10\nsyscall\n\n")
        
   def getFinalMIPS(self):
     self.mipsData+=self.mipsCode
@@ -70,6 +73,17 @@ class Compiler:
     for lexeme, token in self.lexer_table.items():
       print(f"{lexeme:<15} | {token:<25}")
       print("-" * 45)
+
+  def print_symbol_table(self):
+    print("           SYMBOL TABLE")
+    print("-" * 55)
+    print("VARIABLE        | SCOPE    | DATATYPE  | VALUE  | STACK")
+    print("-" * 55)
+
+    for (varName, scope), details in self.symbol_table.items():
+      print(f"{varName:<16}| {scope:<9}| {details['datatype']:<10}| "
+        f"{str(details['value']):<6}| {details['stack']}")
+      print("-" * 55)
 
   def preprocessor(self): #delete comments
     # NFA ALPHABET (COLUMN)
@@ -167,7 +181,6 @@ class Compiler:
   def handle_token(self, char, token_name):
     self.lexer_table[char] = token_name
     self.idx += 1
-    self.print_lexer_table()
     return char, token_name
 
   def scanFSMs(self):
@@ -934,13 +947,20 @@ class Compiler:
 ############## DEBUGGERS ###############
   def getLineError(self):
     line_error = self.line
+    print(f"Line error: {line_error}\n")
     index = self.idx
+    print(f"index: {index}, char: {self.code[index+1: index+5]}")
+    # if self.code[index] == '\n':
+    #     print("naa dire")
+    # else:
+    #   print("wala dire")
     if index >= len(self.code): index = len(self.code)-1
     while(index >=0):
       if self.code[index] == '\n':
+        print(f"naa dire: {self.code[index-1]}")
         line_error-=1
         index-=1
-      elif self.code[index] == ' ':
+      elif self.code[index] in ' \t':
         index-=1
       else: break
 
@@ -1236,9 +1256,12 @@ class Compiler:
   def parseAssignment(self):
     # <Assignment> ::= 'IDENTIFIER' 'EQUAL' <Expression> 'SEMICOLON'
     varName = self.currentLexeme
+    previousIdx = self.idx-1
     self.match('IDENTIFIER')
     if not self.isInScope(varName):
       print("dito ba?")
+      self.line = self.line-self.code[previousIdx: self.idx].count('\n')
+      self.idx = previousIdx
       self.debugUndeclaredVariable(varName)
     self.match('EQUAL')
     self.updateSymbolTableValue(varName)
