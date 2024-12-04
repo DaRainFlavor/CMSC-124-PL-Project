@@ -946,25 +946,41 @@ class Compiler:
 
 ############## DEBUGGERS ###############
   def getLineError(self):
-    line_error = self.line
-    print(f"Line error: {line_error}\n")
-    index = self.idx
-    print(f"index: {index}, char: {self.code[index+1: index+5]}")
-    # if self.code[index] == '\n':
-    #     print("naa dire")
-    # else:
-    #   print("wala dire")
-    if index >= len(self.code): index = len(self.code)-1
-    while(index >=0):
-      if self.code[index] == '\n':
-        print(f"naa dire: {self.code[index-1]}")
-        line_error-=1
-        index-=1
-      elif self.code[index] in ' \t':
-        index-=1
-      else: break
+    codeCopy = self.code
+    lexeme = self.currentLexeme
+    if lexeme == '$': lexeme = ''
+    print(f"lexeme is: {lexeme}")
+    index = codeCopy.rfind(lexeme)
+    
+    if index != -1:
+      # Remove the last occurrence by slicing
+      codeCopy = codeCopy[:index] + codeCopy[index + len(lexeme):]
+    
+    codeCopy = codeCopy.rstrip("\n\t")
+    print(f"codeCopy is: {codeCopy}")
+    return codeCopy.count('\n')+1
+  
+  
+    # print(f"current lexeme: {self.currentLexeme}")
+    # line_error = self.line
+    # print(f"Line error: {line_error}\n")
+    # index = self.idx
+    # print(f"index: {index}, char: {self.code[index-1:]}")
+    # # if self.code[index] == '\n':
+    # #     print("naa dire")
+    # # else:
+    # #   print("wala dire")
+    # if index >= len(self.code): index = len(self.code)-1
+    # while(index >=0):
+    #   if self.code[index] == '\n':
+    #     print(f"naa dire: {self.code[index-1]}")
+    #     line_error-=1
+    #     index-=1
+    #   elif self.code[index] in ' \t':
+    #     index-=1
+    #   else: break
 
-    return line_error
+    # return line_error
 
   def debugMissingDataType(self):
     raise SyntaxError(f"Error in line {self.getLineError()}: Expected data type.")
@@ -1256,12 +1272,9 @@ class Compiler:
   def parseAssignment(self):
     # <Assignment> ::= 'IDENTIFIER' 'EQUAL' <Expression> 'SEMICOLON'
     varName = self.currentLexeme
-    previousIdx = self.idx-1
     self.match('IDENTIFIER')
     if not self.isInScope(varName):
       print("dito ba?")
-      self.line = self.line-self.code[previousIdx: self.idx].count('\n')
-      self.idx = previousIdx
       self.debugUndeclaredVariable(varName)
     self.match('EQUAL')
     self.updateSymbolTableValue(varName)
