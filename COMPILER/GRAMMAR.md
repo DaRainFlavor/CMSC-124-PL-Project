@@ -9,7 +9,7 @@
 <Expression> ::= <Term><Expression_prime>
 <Expression_prime> ::= <Operator> <Term> | ε
 <Term> ::= 'IDENTIFIER' | <Literal>
-<Literal> ::= 'MINUS' 'INTEGER_LITERAL' | 'INTEGER_LITERAL' | 'STRING_LITERAL' | 'SLAY'
+<Literal> ::= 'MINUS' 'CLOUT_LITERAL' | 'CLOUT_LITERAL' | 'STRING_LITERAL' | 'SLAY'
 <Operator> ::= 'PLUS' | 'MINUS' | 'MULTIPLY' | 'DIVIDE'
 <Assignment> ::= 'IDENTIFIER' 'EQUAL' <Expression> 'SEMICOLON'
 <If> ::= 'LET' 'HIM' 'COOK' <Condition> <Block> <Else_if> <Else>
