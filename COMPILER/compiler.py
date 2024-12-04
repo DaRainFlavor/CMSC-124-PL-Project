@@ -1229,9 +1229,9 @@ class Compiler:
       self.debugUndeclaredVariable(varName)
     self.match('EQUAL')
     self.updateSymbolTableValue(varName)
-    if self.isInIf:
-      self.insertSymbol(varName, self.getType(varName))
-      self.updateSymbolTableValue(varName)
+    # if self.isInIf:
+    #   self.insertSymbol(varName, self.getType(varName))
+    #   self.updateSymbolTableValue(varName)
     self.parseExpression(varName)
     self.match('SEMICOLON')
 
@@ -1312,7 +1312,7 @@ class Compiler:
     self.parseBlock()
     self.parseElseIf()
     self.parseElse()
-    if (not self.hasElse and self.hasElseIf) or (not self.hasElse and not self.hasElseIf):
+    if not self.hasElse:
       self.mipsCode += "j END_IF"
     self.mipsCode += f"\n{self.ifMips}\n\nEND_IF:\n"
     self.scope = 0
