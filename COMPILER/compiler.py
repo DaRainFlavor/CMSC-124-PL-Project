@@ -151,7 +151,7 @@ class Compiler:
         right += 1
 
       word = self.code[left:right + 1]
-      raise SyntaxError(f"Error in line {self.getLineError()}: Missing close quotation mark.")
+      raise SyntaxError(f"Skibidi in Toilet {self.getLineError()}: Missing close quotation mark.")
 
 
     # Scan left from the index until a space or the start of the string
@@ -173,9 +173,9 @@ class Compiler:
       if word == "§": raise SyntaxError(f"Skibidi in Toilet {self.line}: you can't rizz `§`.")
       else: raise SyntaxError(f"Skibidi in Toilet {self.getLineError()}: you can't rizz `§`. Yeet in `{word}`")
     if errorNumber == 4: # inavlid use of \
-       raise SyntaxError(f"Error in line {self.getLineError()}: Invalid use of `\\` in `\\{self.code[self.idx]}`.")
+       raise SyntaxError(f"Skibidi in Toilet {self.getLineError()}: Invalid use of `\\` in `\\{self.code[self.idx]}`.")
     if errorNumber == 5: # Missing closing comment
-       raise SyntaxError(f"Error in line {self.getLineError()}: Missing closing comment.")
+       raise SyntaxError(f"Skibidi in Toilet {self.getLineError()}: Missing closing comment.")
 
 
   def handle_token(self, char, token_name):
@@ -522,7 +522,7 @@ class Compiler:
       self.currentLexeme = self.currentToken = ""
       self.currentLexemeToken()
     else:
-      raise SyntaxError(f"Error in line {self.getLineError()}: Expected {token} but found {self.currentToken}")
+      raise SyntaxError(f"Skibidi in Toilet {self.getLineError()}: Expected {token} but found {self.currentToken}")
 ############# SYMBOL TABLE #############
   def isInScope(self, varName):
     scope = self.scope
@@ -983,37 +983,37 @@ class Compiler:
     # return line_error
 
   def debugMissingDataType(self):
-    raise SyntaxError(f"Error in line {self.getLineError()}: Expected data type.")
+    raise SyntaxError(f"Skibidi in Toilet {self.getLineError()}: Expected data type.")
     
   def debugVariableRedeclaration(self, varName):
-    raise SyntaxError(f"Error in line {self.getLineError()}: Redeclaration of {varName}.")
+    raise SyntaxError(f"Skibidi in Toilet {self.getLineError()}: Redemption arc of {varName}.")
   
   def debugUndeclaredVariable(self, varName):
-    raise SyntaxError(f"Error in line {self.getLineError()}: `{varName}` is undeclared.")
+    raise SyntaxError(f"Skibidi in Toilet {self.getLineError()}: `{varName}` is not it.")
   
   def debugTypeMismatch(self, varName1, datatype1, varName2, datatype2):
-    raise SyntaxError(f"Error in line {self.getLineError()}: Type mismatch between`{varName1}`: {datatype1} and `{varName2}`: {datatype2}.")
+    raise SyntaxError(f"Skibidi in Toilet {self.getLineError()}: Negative aura between`{varName1}`: {datatype1} and `{varName2}`: {datatype2}.")
   
   def debugInvalidValue(self):
-    raise SyntaxError(f"Error in line {self.getLineError()}: Invalid value.")
+    raise SyntaxError(f"Skibidi in Toilet {self.getLineError()}: Invalid fanum tax.")
   
   def debugNoValueAssigned(self, varName):
-    raise SyntaxError(f"Error in line {self.getLineError()}: No value assigned to {varName}.")
+    raise SyntaxError(f"Skibidi in Toilet {self.getLineError()}: No huzz assigned to {varName}.")
   
   def debugNoOperator(self):
-    raise SyntaxError(f"Error in line {self.getLineError()}: Operator expected.")
+    raise SyntaxError(f"Skibidi in Toilet {self.getLineError()}: Rizzler expected.")
 
   def debugInvalidStringOperation(self, operator):
-    raise SyntaxError(f"Error in line {self.getLineError()}: Operator `{operator}` not supported on sigma.")
+    raise SyntaxError(f"Skibidi in Toilet {self.getLineError()}: Rizzler `{operator}` not supported on sigma.")
 
   def debugDivisionbyZero(self):
-    raise SyntaxError(f"Error in line {self.getLineError()}: Division by zero")
+    raise SyntaxError(f"Skibidi in Toilet {self.getLineError()}: Division by zero")
   
   def debugInvalidPrint(self, token):
-    raise SyntaxError(f"Error in line {self.getLineError()}: {token} can't be printed")
+    raise SyntaxError(f"Skibidi in Toilet {self.getLineError()}: {token} can't be yeeted")
   
   def debugUnexpectedKeyword(self, lexeme):
-    raise SyntaxError(f"Error in line {self.getLineError()}: Unexpected keyword: {lexeme}.")
+    raise SyntaxError(f"Skibidi in Toilet {self.getLineError()}: Unexpected rizz: {lexeme}.")
 
 ############## SEMANTIC ANALYZERS ###############
   def isSameType(self, varName, firstTermLexeme, firstTermToken):
