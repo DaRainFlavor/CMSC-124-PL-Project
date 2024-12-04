@@ -62,7 +62,6 @@ class Compiler:
     return self.mipsData
   
   def print_lexer_table(self):
-    return
     # Print the table header
     print("           LEXER TABLE")
     print("-" * 45)
@@ -138,7 +137,7 @@ class Compiler:
         right += 1
 
       word = self.code[left:right + 1]
-      raise SyntaxError(f"Error in line {self.line}: Missing close quotation mark.")
+      raise SyntaxError(f"Error in line {self.getLineError()}: Missing close quotation mark.")
 
 
     # Scan left from the index until a space or the start of the string
@@ -155,14 +154,14 @@ class Compiler:
 
     if errorNumber == 1: # unexpected character
       if word == illegalChar: raise SyntaxError(f"Skibidi in toilet {self.line}: Unexpected rizz `{illegalChar}`.")
-      else: raise SyntaxError(f"Skibidi in Toilet {self.line}: Unexpected rizz `{illegalChar}` in `{word}`.")
+      else: raise SyntaxError(f"Skibidi in Toilet {self.getLineError()}: Unexpected rizz `{illegalChar}` in `{word}`.")
     if errorNumber == 2: # use of §
       if word == "§": raise SyntaxError(f"Skibidi in Toilet {self.line}: you can't rizz `§`.")
-      else: raise SyntaxError(f"Skibidi in Toilet {self.line}: you can't rizz `§`. Yeet in `{word}`")
+      else: raise SyntaxError(f"Skibidi in Toilet {self.getLineError()}: you can't rizz `§`. Yeet in `{word}`")
     if errorNumber == 4: # inavlid use of \
-       raise SyntaxError(f"Error in line {self.line}: Invalid use of `\\` in `\\{self.code[self.idx]}`.")
+       raise SyntaxError(f"Error in line {self.getLineError()}: Invalid use of `\\` in `\\{self.code[self.idx]}`.")
     if errorNumber == 5: # Missing closing comment
-       raise SyntaxError(f"Error in line {self.line}: Missing closing comment.")
+       raise SyntaxError(f"Error in line {self.getLineError()}: Missing closing comment.")
 
 
   def handle_token(self, char, token_name):
@@ -510,7 +509,7 @@ class Compiler:
       self.currentLexeme = self.currentToken = ""
       self.currentLexemeToken()
     else:
-      raise SyntaxError(f"Error in line {self.line}: Expected {token} but found {self.currentToken}")
+      raise SyntaxError(f"Error in line {self.getLineError()}: Expected {token} but found {self.currentToken}")
 ############# SYMBOL TABLE #############
   def isInScope(self, varName):
     scope = self.scope
@@ -933,38 +932,52 @@ class Compiler:
         self.translateStrComp(varName1, varName1Type, varName2, varName2Type, operator, varName3, varName3Type)
 
 ############## DEBUGGERS ###############
+  def getLineError(self):
+    line_error = self.line
+    index = self.idx
+    if index >= len(self.code): index = len(self.code)-1
+    while(index >=0):
+      if self.code[index] == '\n':
+        line_error-=1
+        index-=1
+      elif self.code[index] == ' ':
+        index-=1
+      else: break
+
+    return line_error
+
   def debugMissingDataType(self):
-    raise SyntaxError(f"Error in line {self.line}: Expected data type.")
+    raise SyntaxError(f"Error in line {self.getLineError()}: Expected data type.")
     
   def debugVariableRedeclaration(self, varName):
-    raise SyntaxError(f"Error in line {self.line}: Redeclaration of {varName}.")
+    raise SyntaxError(f"Error in line {self.getLineError()}: Redeclaration of {varName}.")
   
   def debugUndeclaredVariable(self, varName):
-    raise SyntaxError(f"Error in line {self.line}: `{varName}` is undeclared.")
+    raise SyntaxError(f"Error in line {self.getLineError()}: `{varName}` is undeclared.")
   
   def debugTypeMismatch(self, varName1, datatype1, varName2, datatype2):
-    raise SyntaxError(f"Error in line {self.line}: Type mismatch between`{varName1}`: {datatype1} and `{varName2}`: {datatype2}.")
+    raise SyntaxError(f"Error in line {self.getLineError()}: Type mismatch between`{varName1}`: {datatype1} and `{varName2}`: {datatype2}.")
   
   def debugInvalidValue(self):
-    raise SyntaxError(f"Error in line {self.line}: Invalid value.")
+    raise SyntaxError(f"Error in line {self.getLineError()}: Invalid value.")
   
   def debugNoValueAssigned(self, varName):
-    raise SyntaxError(f"Error in line {self.line}: No value assigned to {varName}.")
+    raise SyntaxError(f"Error in line {self.getLineError()}: No value assigned to {varName}.")
   
   def debugNoOperator(self):
-    raise SyntaxError(f"Error in line {self.line}: Operator expected.")
+    raise SyntaxError(f"Error in line {self.getLineError()}: Operator expected.")
 
   def debugInvalidStringOperation(self, operator):
-    raise SyntaxError(f"Error in line {self.line}: Operator `{operator}` not supported on sigma.")
+    raise SyntaxError(f"Error in line {self.getLineError()}: Operator `{operator}` not supported on sigma.")
 
   def debugDivisionbyZero(self):
-    raise SyntaxError(f"Error in line {self.line}: Division by zero")
+    raise SyntaxError(f"Error in line {self.getLineError()}: Division by zero")
   
   def debugInvalidPrint(self, token):
-    raise SyntaxError(f"Error in line {self.line}: {token} can't be printed")
+    raise SyntaxError(f"Error in line {self.getLineError()}: {token} can't be printed")
   
   def debugUnexpectedKeyword(self, lexeme):
-    raise SyntaxError(f"Error in line {self.line}: Unexpected keyword: {lexeme}.")
+    raise SyntaxError(f"Error in line {self.getLineError()}: Unexpected keyword: {lexeme}.")
 
 ############## SEMANTIC ANALYZERS ###############
   def isSameType(self, varName, firstTermLexeme, firstTermToken):

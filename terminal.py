@@ -14,6 +14,7 @@ import speech_recognition as sr
 class JavaProcessInterface:
     def __init__(self, root):
         self.root = root
+
         self.startTime = time.time()
         self.isCompiling = True
 
@@ -36,6 +37,7 @@ class JavaProcessInterface:
         self.disableConsole()
         CustomTooltipLabel(anchor_widget=self.send_button, text="Send")
         self.process = None
+        self.input_entry.bind("<Return>", lambda event: self.send_input())
         # self.start_java_process()
 
     def disableConsole(self):
@@ -57,23 +59,38 @@ class JavaProcessInterface:
     #     end_time = time.time()  # End the timer after the process completes
     #     self.display_output(f"Execution time: {end_time - start_time:.6f} seconds")
 
-    def start_java_process(self, filepath):
+    def start_java_process(self, filepath, mips_code):
         self.display_output("Compiling...")
         try:
             # Read the content from the provided filepath
             with open(filepath, 'r', encoding='utf-8') as original_file:
                 content = original_file.read()
-                c = Compiler(content)
-                if c.terminalParsingResult:
+                result = ""
+                c = None
+                if not mips_code:
+                    c = Compiler(content)
+                    result = c.terminalParsingResult
+                
+                if result:
                     self.clear_output()
-                    self.display_output(c.terminalParsingResult)
-                if not c.success:
+                    self.display_output(result)
+                    result = '§' + result
+                if mips_code and mips_code[0] == '§':
+                    self.clear_output()
+                    self.display_output(mips_code[1:])
+
+                if ((not c and mips_code[0] == '§') or  (c and not c.success)):
                     end_time = time.time()
                     elapsed_time = end_time - self.startTime  # Calculate the time difference
                     self.display_output(f"\nProgram has ended in {elapsed_time:.2f} seconds.")
                     # self.disableConsole()
-                    return
-                content = c.getFinalMIPS()
+                    if mips_code and mips_code[0] == '§': return mips_code
+                    return result
+                
+                if mips_code:
+                    content = mips_code
+                else:
+                    content = c.getFinalMIPS()
                 # print(f"content: {content}")
 
             # Write the content to a temporary file
@@ -90,6 +107,7 @@ class JavaProcessInterface:
             )
             # Start a thread to read the output from the Java process
             threading.Thread(target=self.read_output, daemon=True).start()
+            return content
         except Exception as e:
             print(f"Error occurred: {e}")
 
@@ -301,6 +319,8 @@ class AIJavaProcessInterface:
         self.root = root
         self.IDE = IDE
         
+        self.stop_event = threading.Event()
+
         # Output Text Widget
         self.output_text = ctk.CTkTextbox(root, wrap='word', height=300, width=500, font=('Arial', 18), state='disabled')
         self.output_text.pack(fill='both', expand=True)
@@ -322,7 +342,8 @@ class AIJavaProcessInterface:
         
         # self.disableConsole()
         CustomTooltipLabel(anchor_widget=self.send_button, text="Send")
-        self.process = None
+        
+        self.input_entry.bind("<Return>", lambda event: self.send_input())
 
         self.display_output("Speak your program instructions (say 'stop' to end).You can also enter your prompt below. Have fun!\n\n")
         #self.text_to_speech("Speak your program instructions. Say 'stop' to make me stop listening. You can also enter your prompt below. Have fun!")
@@ -351,10 +372,11 @@ class AIJavaProcessInterface:
                         print(f"Recognized: {instruction}")
 
                         if "stop" in instruction.lower():
-                            self.display_output("Listening is done.\n")
+                            self.display_output("Listening stopped.\n")
                             instruction.replace("stop", "")
                             self.input_entry.insert("end", instruction + " ")
-                            print(instruction) 
+                            print(instruction)
+                            self.stop_event.set()
                             return
                         
                         self.input_entry.insert("end", instruction + " ")
@@ -396,6 +418,10 @@ class AIJavaProcessInterface:
         if user_input:
             self.input_entry.delete(0, "end")
             self.display_output(">> " + user_input + "\n")
+            if user_input.lower() == "stop":
+                self.display_output("Listening stopped.\n")
+                self.stop_event.set()
+                return
             response = chat_session.send_message("This is my prompt:\n"+user_input + instructions)
             response = response.text + '\n'
             response = response.replace("```cpp", "")
@@ -404,5 +430,3 @@ class AIJavaProcessInterface:
                 self.text_to_speech(response)
             else:
                 self.IDE.insertTextToScroll(response)
-            
-            

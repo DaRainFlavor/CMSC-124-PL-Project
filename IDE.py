@@ -219,6 +219,7 @@ class IDE():
       self.save_as_file()
 
     content = self.scroll.get(1.0, tk.END)[:-1]
+    
     with open(self.filepath, "w") as f:
       f.write(content)
     self.default_text = content
@@ -459,7 +460,13 @@ class IDE():
     # self.terminal.insert("1.0", "Compiling...")
     
     self.terminal = JavaProcessInterface(self.terminal_frame)
-    self.terminal.start_java_process(self.filepath)
+    content = self.scroll.get(1.0, tk.END)[:-1]
+    
+    if self.content == content:
+      self.terminal.start_java_process(self.filepath, self.mips_code)
+    else:
+      self.mips_code = self.terminal.start_java_process(self.filepath, None)
+      self.content = content
 
 
   #   # Start a thread to run the MIPS code
@@ -537,8 +544,6 @@ class IDE():
     self.itemFrame.after(100, self.on_text_change)
     
 
-
-
   def on_text_selection(self, event=None):
     try:
       # If there is a selection, enable the cut button
@@ -575,8 +580,11 @@ class IDE():
     self.text_frame.grid_columnconfigure(0, weight=1)
 
     # Insert some initial text
-    self.scroll.insert(tk.END, "sadasda\nsdadasda\ndsa")
+    self.scroll.insert(tk.END, "")
     self.scroll.text.focus()
+
+    self.content = ""
+    self.mips_code = ""
 
 
     if customtkinter.get_appearance_mode() == "Dark":
