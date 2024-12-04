@@ -521,6 +521,8 @@ class Compiler:
     if self.currentToken == token:
       self.currentLexeme = self.currentToken = ""
       self.currentLexemeToken()
+      if self.currentToken != ";":  # Check for semicolon at the end
+            self.debugMissingSemicolon()
     else:
       raise SyntaxError(f"Skibidi in Toilet {self.getLineError()}: Expected {token} but found {self.currentToken}")
 ############# SYMBOL TABLE #############
@@ -981,6 +983,10 @@ class Compiler:
     #   else: break
 
     # return line_error
+  def debugMissingSemicolon(self):
+    # If the expected semicolon is not found
+    raise SyntaxError(f"Skibidi in Toilet {self.getLineError()}: Expected SEMICOLON at the end of the statement.")
+
 
   def debugMissingDataType(self):
     raise SyntaxError(f"Skibidi in Toilet {self.getLineError()}: Expected data type.")
