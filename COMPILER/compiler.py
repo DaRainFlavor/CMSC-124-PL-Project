@@ -50,11 +50,11 @@ class Compiler:
     print("\n\n")
     self.print_symbol_table()
 
-    print("\n           MIPS\n")
-    print(self.mipsData+self.mipsCode)
-    for value in self.subroutine.values():
-      print(value)
-    print(f"\n# Exit the program\n\n# add flag § (167)\nli $a0, 167\nli $v0, 11\nsyscall\n# return code: 1\nli $v0, 1\nli $a0, 1\nsyscall\nli $v0, 10\nsyscall\n\n")
+    # print("\n           MIPS\n")
+    # print(self.mipsData+self.mipsCode)
+    # for value in self.subroutine.values():
+    #   print(value)
+    # print(f"\n# Exit the program\n\n# add flag § (167)\nli $a0, 167\nli $v0, 11\nsyscall\n# return code: 1\nli $v0, 1\nli $a0, 1\nsyscall\nli $v0, 10\nsyscall\n\n")
        
   def getFinalMIPS(self):
     self.mipsData+=self.mipsCode
@@ -116,8 +116,8 @@ class Compiler:
       elif self.code[index] == "*": type = 3
       state = table[state][type]
       if(state in [3, 5]):
-        if state == 5:
-          print("DIRI")
+        # if state == 5:
+          # print("DIRI")
         self.code = self.code[:index] + self.code[index+1:]
         self.code = self.code[:index-1] + self.code[index:]
         index-=2
@@ -129,14 +129,14 @@ class Compiler:
     if state in [5, 6, 7, 8]:
       self.debugger(5)
 
-    print(self.code)
-    print(self.line)
+    # print(self.code)
+    # print(self.line)
     self.idx = 0
 
   def debugger(self, errorNumber, index=None):
     if index is None:
       index = self.idx
-    print(self.code[self.idx-1])
+    # print(self.code[self.idx-1])
     illegalChar = self.code[index]
 
     if(errorNumber == 3):
@@ -184,7 +184,7 @@ class Compiler:
     return char, token_name
 
   def scanFSMs(self):
-    print(f"line: {self.line}")
+    # print(f"line: {self.line}")
     # Check for keywords
     nfa = {
       0: {
@@ -477,8 +477,8 @@ class Compiler:
 
   def scanner(self):
     char = self.code[self.idx]
-    print("Kuan")
-    print(self.code)
+    # print("Kuan")
+    # print(self.code)
     while(self.idx < len(self.code) and (char == " " or char == "\n" or char == "\t")):
       if(char == "\n"): 
         self.line+=1
@@ -598,7 +598,7 @@ class Compiler:
         self.mipsData+=(f".align 2\n{varName}: .space 1024\n")
 
   def translateIntAssignment(self, varName, varName1, varName1Type):
-    print("d2 b?")
+    # print("d2 b?")
     if not self.isInIf and not self.isInIfCondition:
       self.mipsCode+=f"\n# {varName} = {varName1}\n"
     elif self.isInIf and not self.isInIfCondition:
@@ -624,7 +624,7 @@ class Compiler:
             self.ifMips+=f"lw $a0, {varName1}\n"
           return  
         firstLine = f"lw $t0, {varName1}\n"
-        print("ditetch")
+        # print("ditetch")
 
       else:
         varName1Stack*=4
@@ -640,7 +640,7 @@ class Compiler:
     if(varNameStack == -1): # global variable name
       # print(f"varname: {varName} self.stack: {self.stack}")
       secondLine = f"sw $t0, {varName}\n"
-      print("ditetch")
+      # print("ditetch")
 
     else:
       varNameStack*=4
@@ -749,24 +749,24 @@ class Compiler:
       varName1Scope = self.getScope(varName1)
     varName2Scope = 'e'
     varName3Scope = 'e'
-    print(f"type: {varName1Type}")
-    print(f"scope: {varName2Type}")
+    # print(f"type: {varName1Type}")
+    # print(f"scope: {varName2Type}")
     if varName2Type == 'IDENTIFIER':
-      print("a")
+      # print("a")
       varName2Scope = self.getScope(varName2)
     if varName3Type == 'IDENTIFIER':
-      print("b")
+      # print("b")
       varName3Scope = self.getScope(varName3)
     if varName2Scope != 'e':
-      print("OOOOOOOOOOOO")
+      # print("OOOOOOOOOOOO")
       if varName2Scope == 0:
         if not self.isInIf or self.isInIfCondition:
           self.mipsCode+=f"lw $t0, {varName2}\n"
-          print("or ditooo")
+          # print("or ditooo")
         elif self.isInIf and not self.isInIfCondition: 
           self.ifMips += f"lw $t0, {varName2}\n"
     else:
-      print("JJJJJJJJJJJJJJJ")
+      # print("JJJJJJJJJJJJJJJ")
       if not self.isInIf or self.isInIfCondition:
         self.mipsCode+=f"li $t0, {int(varName2)}\n"
       # elif self.isInIfCondition:
@@ -775,7 +775,7 @@ class Compiler:
         self.ifMips+=f"li $t0, {int(varName2)}\n"
       
     
-    print(f"SCCCC: {varName3Scope}")
+    # print(f"SCCCC: {varName3Scope}")
     if varName3Scope != 'e':
       if varName3Scope == 0:
         if not self.isInIf or self.isInIfCondition:
@@ -783,7 +783,7 @@ class Compiler:
         elif self.isInIf and not self.isInIfCondition:
           self.ifMips+=f"lw $t1, {varName3}\n"
     else:
-      print("HEYYYY")
+      # print("HEYYYY")
       if not self.isInIf or (self.isInIfCondition and varName1 != '$a0'):
         self.mipsCode+=f"li $t1, {int(varName3)}\n"
       # elif self.isInIfCondition:
@@ -886,9 +886,9 @@ class Compiler:
       self.ifMips+=f"jal concat_strings\n"
 
   def translateStrComp(self, varName1, varName1Type, varName2, varName2Type, operator, varName3, varName3Type):
-    print("!!!!!!!")
-    print(varName2)
-    print(varName2Type)
+    # print("!!!!!!!")
+    # print(varName2)
+    # print(varName2Type)
     filtered2 = varName2.replace('\n', '#')
     filtered3 = varName3.replace('\n', '#')
     if not self.isInIf:
@@ -954,11 +954,13 @@ class Compiler:
 
 ############## DEBUGGERS ###############
   def getLineError(self):
-    codeCopy = self.code
     lexeme = self.currentLexeme
     if lexeme == '$': lexeme = ''
     print(f"lexeme is: {lexeme}")
+    codeCopy = self.code[:self.idx]
     index = codeCopy.rfind(lexeme)
+    
+    print("ITTTS: "+codeCopy)
     
     if index != -1:
       # Remove the last occurrence by slicing
@@ -967,6 +969,7 @@ class Compiler:
     codeCopy = codeCopy.rstrip("\n\t")
     print(f"codeCopy is: {codeCopy}")
     return codeCopy.count('\n')+1
+
   
   
     # print(f"current lexeme: {self.currentLexeme}")
@@ -1044,7 +1047,7 @@ class Compiler:
 
 ############## PARSERS ################
   def parseProgram(self):
-    print(self.currentToken)
+    # print(self.currentToken)
     # <Program> ::= <Statement> <Program> | 'SEMICOLON' <Program> | ε   
     if self.currentToken == "$":
       return
@@ -1102,14 +1105,14 @@ class Compiler:
     self.parseVariableListPrime(datatype)
 
   def parseVariable(self, datatype):
-    print("HEHEHEHEHHEHEHEHEH")
+    # print("HEHEHEHEHHEHEHEHEH")
     # <Variable> ::= 'IDENTIFIER' <Variable_prime>
     varName = self.currentLexeme
     self.match('IDENTIFIER')
     if self.isInScope(varName) and not self.isInIf:
       self.debugVariableRedeclaration(varName)
     elif self.scope == 0 or self.isInIf:
-      print(f"meh: {self.stack} {self.scope}")
+      # print(f"meh: {self.stack} {self.scope}")
       self.insertSymbol(varName, datatype)
       self.translateDeclaration(datatype, varName)
     self.parsevariablePrime(varName)
@@ -1126,23 +1129,23 @@ class Compiler:
     fromPrint = False
     # <Expression> ::= <Term><Expression_prime>
     firstTermLexeme, firstTermToken = self.parseTerm()
-    print(f"First term: {firstTermLexeme}, {firstTermToken}")
+    # print(f"First term: {firstTermLexeme}, {firstTermToken}")
     varNameType = varName
     if not varName:
       fromPrint = True
       varName, varNameType = self.findVarName(firstTermLexeme, firstTermToken)
-    print("FIRST")
+    # print("FIRST")
     self.isSameType(varNameType, firstTermLexeme, firstTermToken)
-    print("SECOND")
+    # print("SECOND")
     if(firstTermToken == 'IDENTIFIER' and self.symbol_table[firstTermLexeme, self.getScope(firstTermLexeme)]["value"] == False):
       self.debugNoValueAssigned(firstTermLexeme)
     operator, secondTermLexeme, secondTermToken = self.parseExpressionPrime()
-    print(f"operator: {operator}")
+    # print(f"operator: {operator}")
     if(secondTermToken == 'IDENTIFIER' and self.symbol_table[secondTermLexeme, self.getScope(secondTermLexeme)]["value"] == False):
       self.debugNoValueAssigned(secondTermLexeme)
-    print('third')
+    # print('third')
     if(operator):
-      print("Naa")
+      # print("Naa")
       if firstTermLexeme == 'IDENTIFIER':
         self.isValueAssigned(firstTermLexeme, firstTermToken)
       if secondTermLexeme == 'IDENTIFIER':
@@ -1154,9 +1157,9 @@ class Compiler:
       elif self.isInIf and not self.isInIfCondition:
         # self.ifMips+="#4\n"
         self.ifMips+=f"li $v0, 9\nli $a0, 1024\nsyscall\nmove $a2, $v0\nmove $t2, $a2\n\n"
-    print('Fourth')    
+    # print('Fourth')    
     if fromPrint:
-      print('YEYEYEYEYEY')
+      # print('YEYEYEYEYEY')
       self.translateAssignment(varName, varNameType, firstTermLexeme, firstTermToken, operator, secondTermLexeme, secondTermToken)
       # print("end?")
     else:
@@ -1183,11 +1186,11 @@ class Compiler:
           self.mipsCode+=f"move $a0, $t2\nli $v0, 4\nsyscall\n\n"
         elif self.isInIf and not self.isInIfCondition:
           self.ifMips+=f"move $a0, $t2\nli $v0, 4\nsyscall\n\n"
-    print("here?")    
+    # print("here?")    
     if self.isInIfCondition:
-      print("is it here?")
+      # print("is it here?")
       if firstTermToken and secondTermToken and operator:
-        print("in")
+        # print("in")
         # dataType1 = self.getType(firstTermLexeme)
         # dataType2 = self.getType(secondTermLexeme)
         # if firstTermToken == "IDENTIFIER" and secondTermToken == "IDENTIFIER":
@@ -1218,7 +1221,7 @@ class Compiler:
             self.mipsCode += f"li $t7, {firstTermLexeme}\n"
             self.secondTerm = True
 
-    print("natapos b")
+    # print("natapos b")
 
   
   def parseTerm(self):
@@ -1284,7 +1287,7 @@ class Compiler:
     varName = self.currentLexeme
     self.match('IDENTIFIER')
     if not self.isInScope(varName):
-      print("dito ba?")
+      # print("dito ba?")
       self.debugUndeclaredVariable(varName)
     self.match('EQUAL')
     self.updateSymbolTableValue(varName)

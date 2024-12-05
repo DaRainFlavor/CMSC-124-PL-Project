@@ -109,7 +109,12 @@ class JavaProcessInterface:
             threading.Thread(target=self.read_output, daemon=True).start()
             return content
         except Exception as e:
-            print(f"Error occurred: {e}")
+            self.clear_output()
+            self.display_output(f"What the sigma: '§'")
+            end_time = time.time()
+            elapsed_time = end_time - self.startTime  # Calculate the time difference
+            self.display_output(f"\nProgram has ended in {elapsed_time:.2f} seconds.")
+
 
     def clear_output(self):
         self.output_text.configure(state='normal')  # Enable editing
@@ -214,7 +219,7 @@ instructions = '''
 Be a translator for my IDE that does instructions to code.
 Convert my prompt or what I said or I ask you to do in BrainRot syntax. 
 
-If you think my prompt didn't ask you to code something or do something, or sending gibberish propmt, reply this "Error: {tell the reason}". When the prompt asks you as an AI that does not involve coding with Brainrot like asking for your opinion, reply "Error: {tell the reason}" Always begin error messages with "Error: "
+If you think my prompt didn't ask you to code something or do something, or sending gibberish propmt, or asking your opinion, or anything that does not involve coding with Brainrot reply this "Error: that is beyond my capabilities".
 
 
 Brainrot's syntax has similarity with c++, it only replaced the following:
@@ -382,13 +387,14 @@ class AIJavaProcessInterface:
                         self.input_entry.insert("end", instruction + " ")
                         print(instruction)
                     except sr.UnknownValueError:
-                        print("Could not understand the speech, but continuing.")
+                        # print("Could not understand the speech, but continuing.")
                         pass
                     except sr.RequestError:
-                        self.text_to_speech("Error: Could not process speech. Check your internet connection.")
-                        self.display_output("Error: Could not process speech. Check your internet connection.\n")
+                        pass
+                        # self.text_to_speech("Error: Could not process speech. Check your internet connection.")
+                        # self.display_output("Error: Could not process speech. Check your internet connection.\n")
                     except Exception as e:
-                        print(f"An unexpected error occurred: {e}")
+                        # print(f"An unexpected error occurred: {e}")
                         pass
 
         # Run the speech listening function in a separate thread
