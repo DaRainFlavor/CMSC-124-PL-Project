@@ -107,7 +107,7 @@ class Compiler:
             ]
     index = 0
     state = 0
-    multipleCommentStart = None;
+    multipleCommentStart = None
     while(index < len(self.code)):
       type = 4
       if self.code[index] == "\"": type = 0
@@ -169,9 +169,9 @@ class Compiler:
     if errorNumber == 1: # unexpected character
       if word == illegalChar: raise SyntaxError(f"Skibidi in toilet {self.line}: Unexpected rizz `{illegalChar}`.")
       else: raise SyntaxError(f"Skibidi in Toilet {self.getLineError()}: Unexpected rizz `{illegalChar}` in `{word}`.")
-    if errorNumber == 2: # use of §
-      if word == "§": raise SyntaxError(f"Skibidi in Toilet {self.line}: you can't rizz `§`.")
-      else: raise SyntaxError(f"Skibidi in Toilet {self.getLineError()}: you can't rizz `§`. Yeet in `{word}`")
+    # if errorNumber == 2: # use of §
+    #   if word == "§": raise SyntaxError(f"Skibidi in Toilet {self.line}: you can't rizz `§`.")
+    #   else: raise SyntaxError(f"Skibidi in Toilet {self.getLineError()}: you can't rizz `§`. Yeet in `{word}`")
     if errorNumber == 4: # inavlid use of \
        raise SyntaxError(f"Skibidi in Toilet {self.getLineError()}: Invalid use of `\\` in `\\{self.code[self.idx]}`.")
     if errorNumber == 5: # Missing closing comment
@@ -306,7 +306,7 @@ class Compiler:
 
     }
 
-    stop_chars = " ;\"{}()<>,§+-*/!=\n"
+    stop_chars = " ;\"{}()<>,+-*/!=\n"
     state = 0
     lexeme = ""
     withTransition = True #becomes false when there is no state transition
@@ -326,9 +326,9 @@ class Compiler:
     # print(state)
     # print(f"curr: {self.code[self.idx]}")
     # print(self.code[self.idx] == "\"")
-    if(self.idx<len(self.code) and self.code[self.idx] == '§'):
-      self.debugger(2)
-      return "", "$"
+    # if(self.idx<len(self.code) and self.code[self.idx] == '§'):
+    #   self.debugger(2)
+    #   return "", "$"
     if withTransition and state in {5, 10, 13, 18, 20, 23, 26, 28, 32, 34, 37, 43, 46}:
       self.idx-=1
       return self.handle_token(lexeme, lexeme.upper())
@@ -368,7 +368,7 @@ class Compiler:
               [2,2,2,2]
             ]
     
-    stop_chars = " ;\"{}()<>,§+-*/!="
+    stop_chars = " ;\"{}()<>,+-*/!="
     while self.idx < len(self.code) and (self.code[self.idx]=="_" or self.code[self.idx].isalpha() or self.code[self.idx].isdigit()):
       type = 3
       current = self.code[self.idx]
@@ -379,9 +379,9 @@ class Compiler:
       
       state = table[state][type]
       self.idx+=1
-    if(self.idx<len(self.code) and self.code[self.idx] == '§'):
-      self.debugger(2)
-      return "", "$"
+    # if(self.idx<len(self.code) and self.code[self.idx] == '§'):
+    #   self.debugger(2)
+    #   return "", "$"
     if state == 1:
       self.idx-=1
       return self.handle_token(lexeme, "IDENTIFIER")
@@ -395,25 +395,26 @@ class Compiler:
     # (1) \
     # (2) n
     # (3) t
-    # (4) §
-    # (5) other symbols
+    # () §
+    # (4) other symbols
 
     table = [
-              [1,6,6,6,6,6],
-              [5,2,3,3,6,3],  
-              [4,4,4,4,6,6],
-              [5,2,3,3,6,3],
-              [5,2,3,3,6,3],  
-              [6,6,6,6,6,6],
-              [6,6,6,6,6,6],
+              [1,6,6,6,6],
+              [5,2,3,3,3],  
+              [4,4,4,4,6],
+              [5,2,3,3,3],
+              [5,2,3,3,3],  
+              [6,6,6,6,6],
+              [6,6,6,6,6],
             ]
     
-    stop_chars = {"§"}
+    # stop_chars = {"§"}
     lexeme = ""
-    while self.idx < len(self.code) and self.code[self.idx] not in stop_chars:
+    while self.idx < len(self.code):
+    # and self.code[self.idx] not in stop_chars:
       type = 5
       current = self.code[self.idx]
-      if state == 5 and current in " ;{}()<>,§+-*=\n":
+      if state == 5 and current in " ;{}()<>,+-*=\n":
         self.idx-=1
         break
       lexeme+=current
@@ -421,16 +422,16 @@ class Compiler:
       elif(current == "\\"): type = 1
       elif(current == "n"): type = 2
       elif(current == "t"): type = 3
-      elif(current == "§"): type = 4
+      # elif(current == "§"): type = 4
       
       oldState = state
       state = table[state][type]
       if oldState == 2 and state == 6:
         self.debugger(4)
       self.idx+=1
-    if(self.idx<len(self.code) and self.code[self.idx] == '§'):
-      self.debugger(2)
-      return "", "$"
+    # if(self.idx<len(self.code) and self.code[self.idx] == '§'):
+    #   self.debugger(2)
+    #   return "", "$"
     if state == 5: return self.handle_token(lexeme, "SIGMA_LITERAL")
     else:
       if(self.idx==len(self.code)):
@@ -465,9 +466,9 @@ class Compiler:
       state = table[state][type]
       self.idx+=1
     
-    if(self.idx<len(self.code) and self.code[self.idx] == '§'):
-      self.debugger(2)
-      return "", "$"
+    # if(self.idx<len(self.code) and self.code[self.idx] == '§'):
+    #   self.debugger(2)
+    #   return "", "$"
     if state == 1:
       self.idx-=1
       return self.handle_token(lexeme, "CLOUT_LITERAL")
@@ -487,9 +488,9 @@ class Compiler:
     if self.idx >= len(self.code):
       # print("No more tokens")
       return "","$"
-    if char == '§':
-      self.debugger(2)
-      return "", "$"    
+    # if char == '§':
+    #   self.debugger(2)
+    #   return "", "$"    
     if char == ";": return self.handle_token(";", "SEMICOLON")
     if char == "(": return self.handle_token("(", "OPEN_PARENTHESIS")
     if char == ")": return self.handle_token(")", "CLOSE_PARENTHESIS")
