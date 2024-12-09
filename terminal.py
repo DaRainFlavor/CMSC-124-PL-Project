@@ -110,6 +110,7 @@ class JavaProcessInterface:
             return content
         except Exception as e:
             self.clear_output()
+            print(f"{e}");
             self.display_output(f"What the sigma: '§'")
             end_time = time.time()
             elapsed_time = end_time - self.startTime  # Calculate the time difference

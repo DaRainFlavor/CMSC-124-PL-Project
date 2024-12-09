@@ -1,1 +1,1 @@
-§tempStr
+move $a0

@@ -19,6 +19,7 @@ class Compiler:
 
     self.scope = 0
     self.scopeCounter = 0
+    self.declarationCounter = 0
 
     self.keepTranslating = True # turns false when it's giving is encountered outside if-else statements
     self.success = False
@@ -546,10 +547,11 @@ class Compiler:
   
   def getScope(self, varName):
     scope = self.scope
-    while(scope>=0): 
-      if((varName, scope) in self.symbol_table):
-        return scope
-      scope-=1
+    if((varName, scope) in self.symbol_table):
+      return scope
+    scope = 0
+    if((varName, scope) in self.symbol_table):
+      return scope
     self.debugUndeclaredVariable(varName)
 
   def getType(self, varName):
@@ -616,8 +618,8 @@ class Compiler:
       firstLine = f"li $t0, {varName1}\n"
     else:
       varName1Scope = self.getScope(varName1)
-      varName1Stack = self.symbol_table[varName1, varName1Scope]["stack"]
-      if(varName1Stack == -1): # global variable name
+      varName1Stack = self.stack - self.symbol_table[varName1, varName1Scope]["stack"]
+      if(varName1Scope == 0): # global variable name
         if '$' in varName:
           if not self.isInIf and not self.isInIfCondition:
             self.mipsCode+=f"lw $a0, {varName1}\n"
@@ -626,7 +628,6 @@ class Compiler:
           return  
         firstLine = f"lw $t0, {varName1}\n"
         print("ditetch")
-
       else:
         varName1Stack*=4
         if '$' in varName:
@@ -647,7 +648,7 @@ class Compiler:
       varNameStack*=4
       # print(f"varname: {varName} self.stack: {self.stack}")
       # print(self.symbol_table)
-      secondLine = f"sw $t0, {varNameStack}($sp)\n"
+      secondLine = f"sub $sp, $sp, 4\nsw $t0, 0($sp)\n"
     if not self.isInIf and not self.isInIfCondition:
       self.mipsCode+=(firstLine+secondLine+"\n")
     else:
@@ -728,8 +729,10 @@ class Compiler:
         return
       return
     else:
+      print("HAYYYS")
       if('$' in varName or self.getScope(varName) == 0): # change this, this is both global
         self.copyString(varName1, varName)
+        print("Naa ra")
         return
       return
 
@@ -766,6 +769,11 @@ class Compiler:
           print("or ditooo")
         elif self.isInIf and not self.isInIfCondition: 
           self.ifMips += f"lw $t0, {varName2}\n"
+      else:
+        if not self.isInIf or self.isInIfCondition:
+          self.mipsCode+=f"lw $t0, {(self.stack - self.getStackValue(varName2))*4}($sp)\n"
+        elif self.isInIf and not self.isInIfCondition: 
+          self.ifMips += f"lw $t0, {(self.stack - self.getStackValue(varName2))*4}($sp)\n"
     else:
       print("JJJJJJJJJJJJJJJ")
       if not self.isInIf or self.isInIfCondition:
@@ -783,6 +791,11 @@ class Compiler:
           self.mipsCode+=f"lw $t1, {varName3}\n"
         elif self.isInIf and not self.isInIfCondition:
           self.ifMips+=f"lw $t1, {varName3}\n"
+      else:
+        if not self.isInIf or self.isInIfCondition:
+          self.mipsCode+=f"lw $t1, {(self.stack - self.getStackValue(varName3))*4}($sp)\n"
+        elif self.isInIf and not self.isInIfCondition:
+          self.ifMips+=f"lw $t1, {(self.stack - self.getStackValue(varName3))*4}($sp)\n"
     else:
       print("HEYYYY")
       if not self.isInIf or (self.isInIfCondition and varName1 != '$a0'):
@@ -835,7 +848,7 @@ class Compiler:
       if varName1Scope == 0:
         self.ifMips+=f"sw $t2, {varName1}\n\n"
       else:
-        self.ifMips+=f"sw $t2, {self.getStackValue(varName1)}($sp)\n\n"
+        self.ifMips+=f"sub $sp, $sp, 4\nsw $t2, {(self.stack - self.getStackValue(varName1))*4}($sp)\n\n"
 
 
   def translateStringtoA(self, strValue, n):
@@ -910,11 +923,12 @@ class Compiler:
       else:
         self.ifMips+=f"la $a2, {varName1}\n\n"
     else:
-      if not self.isInIf and not self.isInIfCondition:
-        self.mipsCode+=f"li $v0, 9\nli $a0, 1024\nsyscall\nmove $a2, $v0\nmove $t2, $a2\n\n"
-      elif self.isInIf and not self.isInIfCondition:
-        # self.ifMips+="#3\n"
-        self.ifMips+=f"li $v0, 9\nli $a0, 1024\nsyscall\nmove $a2, $v0\nmove $t2, $a2\n\n"
+      pass
+      # if not self.isInIf and not self.isInIfCondition:
+      #   self.mipsCode+=f"li $v0, 9\nli $a0, 1024\nsyscall\nmove $a2, $v0\nmove $t2, $a2\n\n"
+      # elif self.isInIf and not self.isInIfCondition:
+      #   # self.ifMips+="#3\n"
+      #   self.ifMips+=f"li $v0, 9\nli $a0, 1024\nsyscall\nmove $a2, $v0\nmove $t2, $a2\n\n"
 
     if varName3Scope != 'e':
       if varName3Scope == 0:
@@ -955,11 +969,13 @@ class Compiler:
 
 ############## DEBUGGERS ###############
   def getLineError(self):
-    codeCopy = self.code
     lexeme = self.currentLexeme
     if lexeme == '$': lexeme = ''
     print(f"lexeme is: {lexeme}")
+    codeCopy = self.code[:self.idx]
     index = codeCopy.rfind(lexeme)
+    
+    print("ITTTS: "+codeCopy)
     
     if index != -1:
       # Remove the last occurrence by slicing
@@ -968,6 +984,7 @@ class Compiler:
     codeCopy = codeCopy.rstrip("\n\t")
     print(f"codeCopy is: {codeCopy}")
     return codeCopy.count('\n')+1
+  
   
   
     # print(f"current lexeme: {self.currentLexeme}")
@@ -1150,6 +1167,7 @@ class Compiler:
         self.isValueAssigned(secondTermLexeme, secondTermToken)
       self.isSameType(varNameType, secondTermLexeme, secondTermToken)
     else:
+      pass
       if not self.isInIf and not self.isInIfCondition:
         self.mipsCode+=f"li $v0, 9\nli $a0, 1024\nsyscall\nmove $a2, $v0\nmove $t2, $a2\n\n"
       elif self.isInIf and not self.isInIfCondition:
@@ -1161,6 +1179,7 @@ class Compiler:
       self.translateAssignment(varName, varNameType, firstTermLexeme, firstTermToken, operator, secondTermLexeme, secondTermToken)
       # print("end?")
     else:
+      print("Nganhi")
       self.translateAssignment(varName, self.getType(varName), firstTermLexeme, firstTermToken, operator, secondTermLexeme, secondTermToken)
     if fromPrint:
       if(operator and not self.isInIf and not self.isInIfCondition):
@@ -1366,15 +1385,16 @@ class Compiler:
     self.match('HIM')
     self.match('COOK')
     self.isInIf = True
-    self.block = "IF"
-    self.ifMips += f"\n{self.block}{self.scope}:\n"
+    self.ifScope = self.scopeCounter
+    self.block = f"IF{self.ifScope}"
+    self.ifMips += f"\n{self.block}:\n"
     self.parseCondition()
     self.parseBlock()
     self.parseElseIf()
     self.parseElse()
     if not self.hasElse:
-      self.mipsCode += "j END_IF"
-    self.mipsCode += f"\n{self.ifMips}\n\nEND_IF:\n"
+      self.mipsCode += f"j END_IF{self.ifScope}"
+    self.mipsCode += f"\n{self.ifMips}\n\nEND_IF{self.ifScope}:\n"
     self.scope = 0
     self.isInIf = False
     self.hasElseIf = False
@@ -1388,9 +1408,9 @@ class Compiler:
     if(self.currentToken == 'WHAT'):
       self.match('WHAT')
       self.match('IF')
-      self.block = "ELSE_IF"
+      self.block = f"ELSE_IF{self.scopeCounter}"
       self.hasElseIf = True
-      self.ifMips += f"\n{self.block}{self.scope}:\n"
+      self.ifMips += f"\n{self.block}:\n"
       self.parseCondition()
       self.parseBlock()
       self.parseElseIf()
@@ -1417,9 +1437,9 @@ class Compiler:
       self.parseRelationalOperator()
       self.parseExpression()
     if self.firstTerm and self.secondTerm:
-      self.mipsCode += f"{self.ifCondition} $t6, $t7, {self.block}{self.scope}\n"
+      self.mipsCode += f"{self.ifCondition} $t6, $t7, {self.block}\n"
     else:
-      self.mipsCode += f"bne $t6, $zero, {self.block}{self.scope}\n"
+      self.mipsCode += f"bne $t6, $zero, {self.block}\n"
     self.match('CLOSE_PARENTHESIS')
     self.ifCondition = ""
     self.isInIfCondition = False
@@ -1473,10 +1493,10 @@ class Compiler:
       self.match('CLOSE_CURLY_BRACES')
     else:
       self.parseBlockStatement()
-    c = self.countVarWithValue(self.scope)
+    c = self.countVarWithValue(self.scopeCounter)
     if (c != 0):
       self.ifMips += f"addi $sp, $sp, {c * 4}\n"
-    self.ifMips += f"j END_IF\n"
+    self.ifMips += f"j END_IF{self.ifScope}\n"
     self.stack = -1 # MIPS stack should be empty here
     
 
@@ -1499,6 +1519,7 @@ class Compiler:
     if self.currentToken in ['CLOUT', 'SIGMA']:
       self.parseDeclaration()
     elif self.currentToken == 'IDENTIFIER':
+      self.declarationCounter+=1
       self.parseAssignment()
     elif self.currentToken == 'YAP':
       self.parsePrint()
