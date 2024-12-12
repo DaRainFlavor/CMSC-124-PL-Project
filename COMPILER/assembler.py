@@ -1,0 +1,1 @@
+# Translates Brainrot to MIPS Assembly

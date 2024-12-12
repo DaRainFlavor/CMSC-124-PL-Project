@@ -1,0 +1,31 @@
+<Program> ::= <Statement> <Program> | 'SEMICOLON' <Program> | ε
+<Statement> ::= <Declaration> | <Assignment> | <if> | <Print> | <Scan> | "IT'S" "GIVING" | "SEMICOLON"
+<Declaration> ::= <Data_type> <Variable_list> 'SEMICOLON'
+<Data_type> ::= 'CLOUT' | 'SIGMA'
+<Variable_list> ::= <Variable> <Variable_list_prime>
+<Variable> ::= 'IDENTIFIER' <Variable_prime>
+<Variable_list_prime> ::= 'COMMA' <Variable_list> | ε
+<Variable_prime> ::= 'EQUAL' <Expression> | ε
+<Expression> ::= <Term><Expression_prime>
+<Expression_prime> ::= <Operator> <Term> | ε
+<Term> ::= 'IDENTIFIER' | <Literal>
+<Literal> ::= 'MINUS' 'CLOUT_LITERAL' | 'CLOUT_LITERAL' | 'STRING_LITERAL' | 'SLAY'
+<Operator> ::= 'PLUS' | 'MINUS' | 'MULTIPLY' | 'DIVIDE'
+<Assignment> ::= 'IDENTIFIER' 'EQUAL' <Expression> 'SEMICOLON'
+<If> ::= 'LET' 'HIM' 'COOK' <Condition> <Block> <Else_if> <Else>
+<Else_if> ::= 'WHAT' 'IF' <condition> <block> <Else_if> | ε
+<Else> ::= 'COOKED' <block> | ε
+<Condition> ::= 'OPEN_PARENTHESIS' <Expression> (<Relational_operator> <Expression> | ε) 'CLOSE_PARENTHESIS'
+<Relational_operator> ::= 'EQUAL' 'EQUAL' | <Less> |'NOT' 'EQUAL' | <Great>
+<Less> ::= 'LESS_THAN' <Relational_prime>
+<Great> ::= 'GREATER_THAN' <Relational_prime>
+<Relational_prime> ::= 'EQUAL' | ε
+<Block> ::= 'OPEN_CURLY_BRACE' <Block_program> 'CLOSE_CURLY_BRACE' | <Statement>
+
+<Block_program> ::= <Block_statement> <Block_program> | 'SEMICOLON' <Block_program> | ε
+<Block_statement> ::= <Declaration> | <Assignment> | <Print> | <Scan> | "IT'S" "GIVING" | "SEMICOLON"
+
+<Print> ::= 'YAP' 'LESS_THAN' 'LESS_THAN' <Expression> <Print_prime> 'SEMICOLON'
+<Print_prime> ::= 'LESS_THAN' 'LESS_THAN' <Expression> <Print_prime>
+<Scan> ::= 'SPILL' 'GREATER_THAN' 'GREATER_THAN' 'IDENTIFIER' <Scan_prime> 'SEMICOLON'
+<Scan_prime> ::= 'GREATER_THAN' 'GREATER_THAN' 'IDENTIFIER' | ε
