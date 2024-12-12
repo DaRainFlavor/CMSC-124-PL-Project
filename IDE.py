@@ -429,9 +429,13 @@ class IDE():
     self.is_running = False
 
   def close_ai(self):
-    self.clear(self.ai_frame)
-    self.ai_frame.destroy()
-    self.is_listening = False
+    try:
+      self.ai.stop_event.set()  # Signal thread to stop
+      self.clear(self.ai_frame)
+      self.ai_frame.destroy()
+    except Exception as e:
+      print("with error")
+      pass
 
   def run(self):
     if self.is_listening:

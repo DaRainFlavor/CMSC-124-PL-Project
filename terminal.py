@@ -103,6 +103,7 @@ class JavaProcessInterface:
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
+                creationflags=subprocess.CREATE_NO_WINDOW, 
                 text=True
             )
             # Start a thread to read the output from the Java process
@@ -220,7 +221,7 @@ instructions = '''
 Be a translator for my IDE that does instructions to code.
 Convert my prompt or what I said or I ask you to do in BrainRot syntax. 
 
-If you think my prompt didn't ask you to code something or do something, or sending gibberish propmt, or asking your opinion, or anything that does not involve coding with Brainrot reply this "Error: that is beyond my capabilities".
+If you think my prompt didn't ask you to code something or do something, or sending gibberish propmt, or asking your opinion, or anything that does not involve coding with Brainrot reply this "Error: Invalid prompt. I can only generate a code you ask.".
 
 
 Brainrot's syntax has similarity with c++, it only replaced the following:
@@ -342,17 +343,11 @@ class AIJavaProcessInterface:
         self.send_button = ctk.CTkButton(self.input_frame, image=send_image, text="", corner_radius=10, width=65, command=self.send_input)
         self.send_button.pack(side='left')
 
-        # on_mic_image = ctk.CTkImage(Image.open("images/on_mic_image.png").resize((40, 40), Image.Resampling.LANCZOS))
-        # self.on_mic_button = ctk.CTkButton(self.input_frame, image=on_mic_image, text="", corner_radius=10, width=65, command=self.on_mic)
-        # self.on_mic_button.pack(side='left')
-        
-        # self.disableConsole()
         CustomTooltipLabel(anchor_widget=self.send_button, text="Send")
         
         self.input_entry.bind("<Return>", lambda event: self.send_input())
 
         self.display_output("Speak your program instructions (say 'stop' to end).You can also enter your prompt below. Have fun!\n\n")
-        #self.text_to_speech("Speak your program instructions. Say 'stop' to make me stop listening. You can also enter your prompt below. Have fun!")
         self.get_speech_input()
 
     def text_to_speech(self, text):
@@ -361,17 +356,16 @@ class AIJavaProcessInterface:
         engine.say(text)
         engine.runAndWait()
 
-
     def get_speech_input(self):
-        print("Here")
         recognizer = sr.Recognizer()
 
         def listen_for_speech():
             with sr.Microphone() as source:
                 recognizer.adjust_for_ambient_noise(source, duration=0.5)
-                self.display_output("Listening for input...\n")
                 
-                while True:
+                if not self.stop_event.is_set(): self.display_output("Listening for input...\n")
+                
+                while not self.stop_event.is_set():  # Check stop_event regularly
                     try:
                         audio = recognizer.listen(source, timeout=None)
                         instruction = recognizer.recognize_google(audio)
@@ -388,22 +382,17 @@ class AIJavaProcessInterface:
                         self.input_entry.insert("end", instruction + " ")
                         print(instruction)
                     except sr.UnknownValueError:
-                        # print("Could not understand the speech, but continuing.")
-                        pass
+                        print("Could not understand the speech, but continuing.")
                     except sr.RequestError:
-                        pass
-                        # self.text_to_speech("Error: Could not process speech. Check your internet connection.")
-                        # self.display_output("Error: Could not process speech. Check your internet connection.\n")
+                        self.display_output("Error: Could not process speech. Check your internet connection.\n")
                     except Exception as e:
-                        # print(f"An unexpected error occurred: {e}")
-                        pass
+                        print(f"An unexpected error occurred: {e}")
+                self.display_output("Speech input thread terminated.\n")
 
         # Run the speech listening function in a separate thread
         threading.Thread(target=listen_for_speech, daemon=True).start()
-                    
-    # def on_mic(self):
-    #     pass
 
+                    
     def disableConsole(self):
         # Disable the input entry and send button to prevent user interaction
         self.input_entry.configure(state="disabled")
@@ -414,26 +403,37 @@ class AIJavaProcessInterface:
         self.send_button.configure(state="normal", fg_color="#1f538d")
             
     def display_output(self, output):
-        self.output_text.configure(state='normal')
-        self.output_text.insert("end", output)
-        self.output_text.configure(state='disabled')
-        self.output_text.see("end")
-        self.root.update_idletasks()  # Force UI update
+        try:
+            self.output_text.configure(state='normal')
+            self.output_text.insert("end", output)
+            self.output_text.configure(state='disabled')
+            self.output_text.see("end")
+            self.root.update_idletasks()  # Force UI update
+        except Exception as e:
+            pass
+            # print("Already destroyed")
 
     def send_input(self):
+        # Update tasks to process pending UI updates
+        self.root.update_idletasks()
+
         user_input = self.input_entry.get()
         if user_input:
             self.input_entry.delete(0, "end")
             self.display_output(">> " + user_input + "\n")
+
             if user_input.lower() == "stop":
                 self.display_output("Listening stopped.\n")
                 self.stop_event.set()
                 return
-            response = chat_session.send_message("This is my prompt:\n"+user_input + instructions)
-            response = response.text + '\n'
-            response = response.replace("```cpp", "")
-            response = response.replace("```", "")
-            if response.startswith("Error"):
-                self.text_to_speech(response)
-            else:
-                self.IDE.insertTextToScroll(response)
+    
+        prompt = "This is my prompt:\n" + user_input + instructions
+
+        # Send the message and process the response
+        response = chat_session.send_message(prompt).text + '\n'
+        response = response.replace("```cpp", "").replace("```", "")
+
+        if response.startswith("Error"):
+            self.display_output(response)
+        else:
+            self.IDE.insertTextToScroll(response)

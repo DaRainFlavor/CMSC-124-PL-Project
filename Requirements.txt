@@ -8,3 +8,6 @@ Custom-Tooltip --upgrade
 pyttsx3
 SpeechRecognition
 pyaudio
+
+
+# pyinstaller --icon=icon.ico --onefile  main.py --windowed
