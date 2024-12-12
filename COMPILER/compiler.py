@@ -77,14 +77,14 @@ class Compiler:
 
   def print_symbol_table(self):
     print("           SYMBOL TABLE")
-    print("-" * 55)
-    print("VARIABLE        | SCOPE    | DATATYPE  | VALUE  | STACK")
-    print("-" * 55)
+    print("-" * 45)
+    print("VARIABLE        | SCOPE    | DATATYPE  | STACK")
+    print("-" * 45)
 
     for (varName, scope), details in self.symbol_table.items():
-      print(f"{varName:<16}| {scope:<9}| {details['datatype']:<10}| "
-        f"{str(details['value']):<6}| {details['stack']}")
-      print("-" * 55)
+      print(f"{varName:<16}| {scope:<9}| {details['datatype']:<10}| {details['stack']}")
+      print("-" * 45)
+
 
   def preprocessor(self): #delete comments
     # NFA ALPHABET (COLUMN)
@@ -170,13 +170,13 @@ class Compiler:
     if errorNumber == 1: # unexpected character
       if word == illegalChar: raise SyntaxError(f"Skibidi in toilet {self.line}: Unexpected rizz `{illegalChar}`.")
       else: raise SyntaxError(f"Skibidi in Toilet {self.getLineError()}: Unexpected rizz `{illegalChar}` in `{word}`.")
-    # if errorNumber == 2: # use of §
-    #   if word == "§": raise SyntaxError(f"Skibidi in Toilet {self.line}: you can't rizz `§`.")
-    #   else: raise SyntaxError(f"Skibidi in Toilet {self.getLineError()}: you can't rizz `§`. Yeet in `{word}`")
+    if errorNumber == 2: # use of §
+      if word == "§": raise SyntaxError(f"Skibidi in Toilet {self.line}: you can't rizz `§`.")
+      else: raise SyntaxError(f"Skibidi in Toilet {self.getLineError()}: you can't rizz `§`. Yeet in `{word}`")
     if errorNumber == 4: # inavlid use of \
-       raise SyntaxError(f"Skibidi in Toilet {self.getLineError()}: Invalid use of `\\` in `\\{self.code[self.idx]}`.")
+      raise SyntaxError(f"Skibidi in Toilet {self.getLineError()}: Invalid use of `\\` in `\\{self.code[self.idx]}`.")
     if errorNumber == 5: # Missing closing comment
-       raise SyntaxError(f"Skibidi in Toilet {self.getLineError()}: Missing closing comment.")
+      raise SyntaxError(f"Skibidi in Toilet {self.getLineError()}: Missing closing comment.")
 
 
   def handle_token(self, char, token_name):
@@ -307,7 +307,7 @@ class Compiler:
 
     }
 
-    stop_chars = " ;\"{}()<>,+-*/!=\n"
+    stop_chars = " ;\"{}()<>,§+-*/!=\n"
     state = 0
     lexeme = ""
     withTransition = True #becomes false when there is no state transition
@@ -327,9 +327,9 @@ class Compiler:
     # print(state)
     # print(f"curr: {self.code[self.idx]}")
     # print(self.code[self.idx] == "\"")
-    # if(self.idx<len(self.code) and self.code[self.idx] == '§'):
-    #   self.debugger(2)
-    #   return "", "$"
+    if(self.idx<len(self.code) and self.code[self.idx] == '§'):
+      self.debugger(2)
+      return "", "$"
     if withTransition and state in {5, 10, 13, 18, 20, 23, 26, 28, 32, 34, 37, 43, 46}:
       self.idx-=1
       return self.handle_token(lexeme, lexeme.upper())
@@ -369,7 +369,7 @@ class Compiler:
               [2,2,2,2]
             ]
     
-    stop_chars = " ;\"{}()<>,+-*/!="
+    stop_chars = " ;\"{}()<>,§+-*/!="
     while self.idx < len(self.code) and (self.code[self.idx]=="_" or self.code[self.idx].isalpha() or self.code[self.idx].isdigit()):
       type = 3
       current = self.code[self.idx]
@@ -409,13 +409,12 @@ class Compiler:
               [6,6,6,6,6,6],
             ]
     
-    # stop_chars = {"§"}
+    stop_chars = {"§"}
     lexeme = ""
-    while self.idx < len(self.code):
-    # and self.code[self.idx] not in stop_chars:
+    while self.idx < len(self.code) and self.code[self.idx] not in stop_chars:
       type = 5
       current = self.code[self.idx]
-      if state == 5 and current in " ;{}()<>,+-*=\n":
+      if state == 5 and current in " ;{}()<>,§+-*=\n":
         self.idx-=1
         break
       lexeme+=current
@@ -423,7 +422,7 @@ class Compiler:
       elif(current == "\\"): type = 1
       elif(current == "n"): type = 2
       elif(current == "t"): type = 3
-      # elif(current == "§"): type = 4
+      elif(current == "§"): type = 4
       
       oldState = state
       state = table[state][type]
@@ -489,9 +488,9 @@ class Compiler:
     if self.idx >= len(self.code):
       # print("No more tokens")
       return "","$"
-    # if char == '§':
-    #   self.debugger(2)
-    #   return "", "$"    
+    if char == '§':
+      self.debugger(2)
+      return "", "$"    
     if char == ";": return self.handle_token(";", "SEMICOLON")
     if char == "(": return self.handle_token("(", "OPEN_PARENTHESIS")
     if char == ")": return self.handle_token(")", "CLOSE_PARENTHESIS")
@@ -536,14 +535,10 @@ class Compiler:
   def insertSymbol(self, varName, datatype):
     if(self.scope>0):
       self.stack+=1
-    self.symbol_table[varName, self.scope] = {"datatype": datatype, "value": False, "stack": self.stack}
+    self.symbol_table[varName, self.scope] = {"datatype": datatype, "stack": self.stack}
 
   def isInSymbolTable(self, varName):
     self.getScope(varName)
-  
-  def updateSymbolTableValue(self, varName):
-    scope = self.getScope(varName)
-    self.symbol_table[varName, scope]["value"] = True
   
   def getScope(self, varName):
     scope = self.scope
@@ -563,8 +558,6 @@ class Compiler:
   def isValueAssigned(self, varName, varNameType):
     if(varNameType in ["SLAY", "CLOUT_LITERAL", "SIGMA_LITERAL"]):
       return
-    if(self.symbol_table[varName, self.getScope(varName)]["value"] == None):
-      self.debugNoValueAssigned(varName)
 
   def findVarName(self, lexeme, token):
     if(token == 'IDENTIFIER'):
@@ -581,7 +574,7 @@ class Compiler:
   def countVarWithValue(self, inScope):
     count = 0
     for (varName, scope) in self.symbol_table:  
-      if scope == inScope and self.symbol_table[varName, scope]["value"] == True:
+      if scope == inScope:
         count += 1
     return count
     
@@ -623,7 +616,7 @@ class Compiler:
         if '$' in varName:
           if not self.isInIf and not self.isInIfCondition:
             self.mipsCode+=f"lw $a0, {varName1}\n"
-          else:
+          elif varName == '$a0':
             self.ifMips+=f"lw $a0, {varName1}\n"
           return  
         firstLine = f"lw $t0, {varName1}\n"
@@ -958,8 +951,6 @@ class Compiler:
     elif operator:
       if(varName1Type == 'SIGMA' and operator != '+'):
         self.debugInvalidStringOperation(operator)
-      if('$' not in varName1 and varName1 in [varName2, varName3] and self.isValueAssigned(varName1, varName1Type)):
-        self.debugNoValueAssigned(varName1)
       if(varName3Type == 'CLOUT_LITERAL' and operator == '/' and int(varName3) == 0):
         self.debugDivisionbyZero()
       if(varName1Type == 'CLOUT'):
@@ -1024,9 +1015,6 @@ class Compiler:
   
   def debugInvalidValue(self):
     raise SyntaxError(f"Skibidi in Toilet {self.getLineError()}: Invalid fanum tax.")
-  
-  def debugNoValueAssigned(self, varName):
-    raise SyntaxError(f"Skibidi in Toilet {self.getLineError()}: No huzz assigned to {varName}.")
   
   def debugNoOperator(self):
     raise SyntaxError(f"Skibidi in Toilet {self.getLineError()}: Rizzler expected.")
@@ -1137,7 +1125,6 @@ class Compiler:
     if(self.currentToken == 'EQUAL'):
       self.match('EQUAL')
       self.parseExpression(lexeme)
-      self.updateSymbolTableValue(lexeme)
     else: return  
 
   def parseExpression(self, varName=None):
@@ -1152,12 +1139,8 @@ class Compiler:
     print("FIRST")
     self.isSameType(varNameType, firstTermLexeme, firstTermToken)
     print("SECOND")
-    if(firstTermToken == 'IDENTIFIER' and self.symbol_table[firstTermLexeme, self.getScope(firstTermLexeme)]["value"] == False):
-      self.debugNoValueAssigned(firstTermLexeme)
     operator, secondTermLexeme, secondTermToken = self.parseExpressionPrime()
     print(f"operator: {operator}")
-    if(secondTermToken == 'IDENTIFIER' and self.symbol_table[secondTermLexeme, self.getScope(secondTermLexeme)]["value"] == False):
-      self.debugNoValueAssigned(secondTermLexeme)
     print('third')
     if(operator):
       print("Naa")
@@ -1168,9 +1151,9 @@ class Compiler:
       self.isSameType(varNameType, secondTermLexeme, secondTermToken)
     else:
       pass
-      if not self.isInIf and not self.isInIfCondition:
+      if varNameType == 'SIGMA' and not self.isInIf and not self.isInIfCondition:
         self.mipsCode+=f"li $v0, 9\nli $a0, 1024\nsyscall\nmove $a2, $v0\nmove $t2, $a2\n\n"
-      elif self.isInIf and not self.isInIfCondition:
+      elif varNameType == 'SIGMA' and  self.isInIf and not self.isInIfCondition:
         # self.ifMips+="#4\n"
         self.ifMips+=f"li $v0, 9\nli $a0, 1024\nsyscall\nmove $a2, $v0\nmove $t2, $a2\n\n"
     print('Fourth')    
@@ -1307,7 +1290,6 @@ class Compiler:
       print("dito ba?")
       self.debugUndeclaredVariable(varName)
     self.match('EQUAL')
-    self.updateSymbolTableValue(varName)
     # if self.isInIf:
     #   self.insertSymbol(varName, self.getType(varName))
     #   self.updateSymbolTableValue(varName)
@@ -1340,13 +1322,15 @@ class Compiler:
     lexeme = self.currentLexeme
     self.match('IDENTIFIER')
     self.isInSymbolTable(lexeme)
-    self.updateSymbolTableValue(lexeme)
     
     if(self.getType(lexeme) == "CLOUT"):
       if not self.isInIf:
         self.mipsCode+=f"\n# add scanning flag § (167)\nli $a0, 167\nli $v0, 11\nsyscall\n# return code: 0\nli $v0, 1\nli $a0, 0\nsyscall\n\n# scan {lexeme}\nli $v0, 5\nsyscall\nsw $v0, {lexeme}\n"
       else:
-        self.ifMips+=f"\n# add scanning flag § (167)\nli $a0, 167\nli $v0, 11\nsyscall\n# return code: 0\nli $v0, 1\nli $a0, 0\nsyscall\n\n# scan {lexeme}\nli $v0, 5\nsyscall\nsw $v0, {lexeme}\n"
+        if self.getScope(lexeme) != -1:
+          self.ifMips+=f"\n# add scanning flag § (167)\nli $a0, 167\nli $v0, 11\nsyscall\n# return code: 0\nli $v0, 1\nli $a0, 0\nsyscall\n\n# scan {lexeme}\nli $v0, 5\nsyscall\nsw $v0, {(self.stack - self.getStackValue(lexeme))*4}($sp)\n"
+        else:
+          self.ifMips+=f"\n# add scanning flag § (167)\nli $a0, 167\nli $v0, 11\nsyscall\n# return code: 0\nli $v0, 1\nli $a0, 0\nsyscall\n\n# scan {lexeme}\nli $v0, 5\nsyscall\nsw $v0, {lexeme}\n"
     if(self.getType(lexeme) == "SIGMA"):
       if not self.isInIf:
         self.mipsCode+=f"\n# add scanning flag § (167)\nli $a0, 167\nli $v0, 11\nsyscall\n# return code: 0\nli $v0, 1\nli $a0, 0\nsyscall\n\n# scan {lexeme}\nli $v0, 8\nla $a0, {lexeme}\nli $a1, 1024\nsyscall\n# Remove newline from {lexeme}\nla $a0, {lexeme}\njal remove_newline\n"
@@ -1365,7 +1349,6 @@ class Compiler:
       lexeme = self.currentLexeme
       self.match('IDENTIFIER')
       self.isInSymbolTable(lexeme)
-      self.updateSymbolTableValue(lexeme)
       if(self.getType(lexeme) == "CLOUT"):
         if not self.isInIf:
           self.mipsCode+=f"\n# add scanning flag § (167)\nli $a0, 167\nli $v0, 11\nsyscall\n# return code: 0\nli $v0, 1\nli $a0, 0\nsyscall\n\n# scan {lexeme}\nli $v0, 5\nsyscall\nsw $v0, {lexeme}\n"
@@ -1528,7 +1511,7 @@ class Compiler:
     elif self.currentToken == "IT'S":
       self.match("IT'S")
       self.match("GIVING")
-      self.translateReturn()
+      self.ifMips += f"\n# end\n\n# add flag § (167)\nli $a0, 167\nli $v0, 11\nsyscall\n# return code: 1\nli $v0, 1\nli $a0, 1\nsyscall\nli $v0, 10\nsyscall\n\n"
     elif self.currentToken == 'SEMICOLON':
       self.match('SEMICOLON')
     else:

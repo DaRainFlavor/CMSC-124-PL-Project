@@ -220,7 +220,7 @@ class IDE():
 
     content = self.scroll.get(1.0, tk.END)[:-1]
     
-    with open(self.filepath, "w") as f:
+    with open(self.filepath, "w", encoding = 'utf-8') as f:
       f.write(content)
     self.default_text = content
     self.on_text_change()
