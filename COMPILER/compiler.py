@@ -135,6 +135,7 @@ class Compiler:
     self.idx = 0
 
   def debugger(self, errorNumber, index=None):
+    print("a")
     if index is None:
       index = self.idx
     print(self.code[self.idx-1])
@@ -154,7 +155,7 @@ class Compiler:
       word = self.code[left:right + 1]
       raise SyntaxError(f"Skibidi in Toilet {self.getLineError()}: Missing close quotation mark.")
 
-
+    print("b")
     # Scan left from the index until a space or the start of the string
     left = index
     while left > 0 and self.code[left - 1] not in ' ,;\n\t':
@@ -166,10 +167,15 @@ class Compiler:
       right += 1
 
     word = self.code[left:right + 1]
-
+    print("d")
     if errorNumber == 1: # unexpected character
-      if word == illegalChar: raise SyntaxError(f"Skibidi in toilet {self.line}: Unexpected rizz `{illegalChar}`.")
-      else: raise SyntaxError(f"Skibidi in Toilet {self.getLineError()}: Unexpected rizz `{illegalChar}` in `{word}`.")
+      print("e")
+      if word == illegalChar: 
+        print("f")
+        raise SyntaxError(f"Skibidi in toilet {self.line}: Unexpected rizz `{illegalChar}`.")
+      else: 
+        print("g")
+        raise SyntaxError(f"Skibidi in Toilet {self.getLineError()}: Unexpected rizz `{illegalChar}` in `{word}`.")
     if errorNumber == 2: # use of §
       if word == "§": raise SyntaxError(f"Skibidi in Toilet {self.line}: you can't rizz `§`.")
       else: raise SyntaxError(f"Skibidi in Toilet {self.getLineError()}: you can't rizz `§`. Yeet in `{word}`")
@@ -311,7 +317,7 @@ class Compiler:
     state = 0
     lexeme = ""
     withTransition = True #becomes false when there is no state transition
-    while self.idx < len(self.code) and self.code[self.idx] not in stop_chars:
+    while self.idx < len(self.code) and self.code[self.idx] not in stop_chars and self.code[self.idx].isalpha():
       current = self.code[self.idx]
       lexeme+=current
       
@@ -344,15 +350,23 @@ class Compiler:
         self.idx+=1
       return self.DFAVarName(1, lexeme)
     if not withTransition and "'" in lexeme:
+      print("2HEREEEEEEEEEEEEEEEE")
       self.debugger(1, self.code[:self.idx+1].rfind("'"))
       return "", "$"
     if self.idx<len(self.code) and self.code[self.idx] == "\"":
       return self.DFAStringVal(0)
     elif self.idx<len(self.code) and self.code[self.idx] not in stop_chars and (lexeme.isdigit()):
+      print("hes")
       return self.DFAIntVal(0)
+    elif self.idx<len(self.code) and self.code[self.idx].isdigit() and lexeme == "":
+      return self.DFAIntVal(0)
+    elif self.idx<len(self.code) and self.code[self.idx] == "_":
+      return self.DFAVarName(0, lexeme)
     else:
       if self.idx>=len(self.code):
         self.idx-=1
+      
+      print(f"4HEREEEEEEEEEEEEEEEE: {lexeme}")
       self.debugger(1)
       return "", "$"
 
@@ -387,6 +401,7 @@ class Compiler:
       self.idx-=1
       return self.handle_token(lexeme, "IDENTIFIER")
     else:
+      print("HEREEEEEEEEEEEEEEEE")
       self.debugger(1)
       return "", "$"
 
@@ -473,6 +488,7 @@ class Compiler:
       self.idx-=1
       return self.handle_token(lexeme, "CLOUT_LITERAL")
     else:
+      print("1HEREEEEEEEEEEEEEEEE")
       self.debugger(1)
       return "", "$"
 
@@ -522,9 +538,11 @@ class Compiler:
     if self.currentToken == token:
       self.currentLexeme = self.currentToken = ""
       self.currentLexemeToken()
-      
     else:
-      raise SyntaxError(f"Skibidi in Toilet {self.getLineError()}: Expected {token} but found {self.currentToken}")
+      if self.currentToken == '$':
+        raise SyntaxError(f"Skibidi in Toilet {self.getLineError()}: Expected {token}.")
+      else:
+        raise SyntaxError(f"Skibidi in Toilet {self.getLineError()}: Expected {token} but found {self.currentToken}.")
 ############# SYMBOL TABLE #############
   def isInScope(self, varName):
     scope = self.scope
@@ -960,12 +978,17 @@ class Compiler:
 
 ############## DEBUGGERS ###############
   def getLineError(self):
+    print("h")
     lexeme = self.currentLexeme
     if lexeme == '$': lexeme = ''
     print(f"lexeme is: {lexeme}")
+    print("i")
     codeCopy = self.code[:self.idx]
-    index = codeCopy.rfind(lexeme)
-    
+    if not lexeme:
+      lexeme = "" 
+      index = self.idx
+    else: index = codeCopy.rfind(lexeme)
+    print("k")
     print("ITTTS: "+codeCopy)
     
     if index != -1:
@@ -1029,6 +1052,7 @@ class Compiler:
     raise SyntaxError(f"Skibidi in Toilet {self.getLineError()}: {token} can't be yeeted")
   
   def debugUnexpectedKeyword(self, lexeme):
+    print("haaaa")
     raise SyntaxError(f"Skibidi in Toilet {self.getLineError()}: Unexpected rizz: {lexeme}.")
 
 ############## SEMANTIC ANALYZERS ###############
