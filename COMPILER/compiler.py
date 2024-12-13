@@ -104,7 +104,7 @@ class Compiler:
             ]
     index = 0
     state = 0
-    multipleCommentStart = None;
+    multipleCommentStart = None
     while(index < len(self.code)):
       type = 4
       if self.code[index] == "\"": type = 0
@@ -122,7 +122,9 @@ class Compiler:
 
       index+=1
     if state in [5, 6, 7, 8]:
-      self.debugger(5)
+      if index == 0:
+        raise SyntaxError(f"Skibidi in Toilet 1: Missing closing comment.")  
+      else: self.debugger(5)
 
     self.idx = 0
 
@@ -167,7 +169,8 @@ class Compiler:
     if errorNumber == 4: # inavlid use of \
       raise SyntaxError(f"Skibidi in Toilet {self.getLineError()}: Invalid use of `\\` in `\\{self.code[self.idx]}`.")
     if errorNumber == 5: # Missing closing comment
-      raise SyntaxError(f"Skibidi in Toilet {self.getLineError()}: Missing closing comment.")
+      count = self.code.count('\n')+1
+      raise SyntaxError(f"Skibidi in Toilet {count}: Missing closing comment.")
 
 
   def handle_token(self, char, token_name):
@@ -549,7 +552,6 @@ class Compiler:
       return "$a2", 'SIGMA', 
     if(token in ['CLOUT', 'CLOUT_LITERAL']):
       return "$a0", 'CLOUT'
-
     else:
       self.debugInvalidPrint(token)
 
@@ -868,19 +870,27 @@ class Compiler:
       else:
         self.ifMips+=f"la $a2, {varName1}\n\n"
     else:
-      pass
+      if not self.isInIf and not self.isInIfCondition:
+        self.mipsCode+=f"li $v0, 9\nli $a0, 1024\nsyscall\nmove $a2, $v0\nmove $t2, $a2\n\n"
+      elif self.isInIf and not self.isInIfCondition:
+        # self.ifMips+="#3\n"
+        self.ifMips+=f"li $v0, 9\nli $a0, 1024\nsyscall\nmove $a2, $v0\nmove $t2, $a2\n\n"
 
     if varName3Scope != 'e':
-      if varName3Scope == 0:
+      if self.scope == 0:
         self.mipsCode+=f"la $a1, {varName3}\n"
+      else:
+        self.ifMips+=f"la $a1, {varName3}\n"
     else:
       if(varName3 == 'slay'):
         self.translateStringtoA('\\n', 1)  
       else: self.translateStringtoA(varName3[1:-1], 1)
 
     if varName2Scope != 'e':
-      if varName2Scope == 0:
+      if self.scope == 0:
         self.mipsCode+=f"la $a0, {varName2}\n"
+      else:
+        self.ifMips+=f"la $a0, {varName2}\n"
     else:
       if(varName2 == 'slay'):
         self.translateStringtoA('\\n', 0)  
@@ -950,7 +960,6 @@ class Compiler:
     raise SyntaxError(f"Skibidi in Toilet {self.getLineError()}: {token} can't be yeeted")
   
   def debugUnexpectedKeyword(self, lexeme):
-    print("haaaa")
     raise SyntaxError(f"Skibidi in Toilet {self.getLineError()}: Unexpected rizz: {lexeme}.")
 
 ############## SEMANTIC ANALYZERS ###############

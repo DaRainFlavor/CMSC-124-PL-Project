@@ -26,6 +26,7 @@ class IDE():
     self.root.bind_all("<Control-Shift-S>", lambda event: self.save_as_file())
     self.root.bind_all("<Control-o>", lambda event: self.open_file())
     self.root.bind_all("<Control-n>", lambda event: self.new_file())
+    self.root.bind_all("<Control-r>", lambda event: self.run())
 
   def clear(self, object):
     slaves = object.grid_slaves()
@@ -439,6 +440,7 @@ class IDE():
       pass
 
   def run(self):
+    if self.welcome: return
     if self.is_listening:
       self.close_ai()
     if self.is_running:
@@ -499,6 +501,7 @@ class IDE():
   #       self.terminal.insert(tk.END, "\nError: MARS is not installed or not found in your system's PATH.\n")
 
   def ai(self):
+    if self.welcome: return
     if self.is_running:
       self.close_terminal()
     if self.is_listening:

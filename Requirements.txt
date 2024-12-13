@@ -6,3 +6,18 @@ google-generativeai
 pyttsx3
 SpeechRecognition
 pyaudio
+
+
+# tkinter
+# customtkinter
+# pillow
+# Custom-Tooltip --upgrade
+# #python -m pip
+# # python.exe -m pip install --upgrade pip
+# -U google-generativeai
+# pyttsx3
+# SpeechRecognition
+# pyaudio
+
+
+# # pyinstaller --icon=icon.ico --onefile  main.py --windowed

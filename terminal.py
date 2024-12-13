@@ -113,7 +113,7 @@ class JavaProcessInterface:
         except Exception as e:
             self.clear_output()
             print(f"{e}");
-            self.display_output(f"What the sigma: '§'")
+            self.display_output(f"What the sigma!")
             end_time = time.time()
             elapsed_time = end_time - self.startTime  # Calculate the time difference
             self.display_output(f"\n\n=== Program has ended in {elapsed_time:.2f} seconds. ===")
@@ -162,7 +162,7 @@ class JavaProcessInterface:
                     # self.disableConsole()
                     end_time = time.time()
                     elapsed_time = end_time - self.startTime  # Calculate the time difference
-                    self.display_output(f"\nDivision by zero occured.\n\n=== Program has ended in {elapsed_time:.2f} seconds. ===")
+                    self.display_output(f"\nSkibidi: Division by zero occured.\n\n=== Program has ended in {elapsed_time:.2f} seconds. ===")
                     return
         
         if flag:
