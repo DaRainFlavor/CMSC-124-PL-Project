@@ -1,13 +1,8 @@
 tkinter
 customtkinter
 pillow
-Custom-Tooltip --upgrade
-#python -m pip
-# python.exe -m pip install --upgrade pip
--U google-generativeai
+Custom-Tooltip
+google-generativeai
 pyttsx3
 SpeechRecognition
 pyaudio
-python-dotenv
-
-# pyinstaller --icon=icon.ico --onefile  main.py --windowed
