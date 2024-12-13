@@ -14,7 +14,6 @@ import speech_recognition as sr
 class JavaProcessInterface:
     def __init__(self, root):
         self.root = root
-
         self.startTime = time.time()
         self.isCompiling = True
 
@@ -306,7 +305,7 @@ Here is the grammar for your guide:
 The limitation of my code is the following:
 1. it can only do +, -, *, / operations
 2. operations should only be <operator> <operand> <operator>
-3. no nested if-else
+3. no nested conditionals
 4. no loops are available
 5. code should only be limited to the grammar like in my sample code
 
@@ -314,19 +313,20 @@ If my prompt above is complicated like it involves multiple operands, use multip
 Make sure that only one operator (+, -, *, /) is involved per instruction. 
 Example : x = 3+3;
 
-If what I asked is too complicated and impossible to handle with my grammar, reply this "Error: {state your reason}".
+If what I asked is too complicated and impossible to handle with my grammar, reply this "Error: too complicated instructions.".
 
-If you think my prompt didn't ask you to code something or do something, reply this "Error: {tell that you are only capable of converting instructions to code.}". When the prompt asks you as an AI that does not involve coding with Brainrot like asking for your opinion, reply "Error: {tell that you are only capable of converting instructions to code.}" Always begin error messages with "Error: "
+If you think my prompt didn't ask you to code something or do something, reply this "Error: Invalid prompt. I can only generate a code you ask.". Always begin error messages with "Error: "
 
 If you can generate a BrainRot code, respond right away the code starting with this comment "// AI Generated Code". Do not include introductory or conclusion or unnecessary texts.
 '''
 
-class AIJavaProcessInterface:
+class AIInterface:
     def __init__(self, root, IDE):
         self.root = root
         self.IDE = IDE
         
         self.stop_event = threading.Event()
+        self.stop_ai = threading.Event()
 
         # Output Text Widget
         self.output_text = ctk.CTkTextbox(root, wrap='word', height=300, width=500, font=('Arial', 18), state='disabled')
@@ -347,7 +347,7 @@ class AIJavaProcessInterface:
         
         self.input_entry.bind("<Return>", lambda event: self.send_input())
 
-        self.display_output("Speak your program instructions (say 'stop' to end).You can also enter your prompt below. Have fun!\n\n")
+        self.display_output("Speak your program instructions (say or type 'stop' to end).You can also enter your prompt below. Have fun!\n\n")
         self.get_speech_input()
 
     def text_to_speech(self, text):
@@ -372,7 +372,7 @@ class AIJavaProcessInterface:
                         print(f"Recognized: {instruction}")
 
                         if "stop" in instruction.lower():
-                            self.display_output("Listening stopped.\n")
+                            self.display_output("Listening stopped.\n\n")
                             instruction.replace("stop", "")
                             self.input_entry.insert("end", instruction + " ")
                             print(instruction)
@@ -380,15 +380,17 @@ class AIJavaProcessInterface:
                             return
                         
                         self.input_entry.insert("end", instruction + " ")
-                        print(instruction)
+                        # print(instruction)
                     except sr.UnknownValueError:
-                        print("Could not understand the speech, but continuing.")
+                        pass
+                        # print("Could not understand the speech, but continuing.")
                     except sr.RequestError:
-                        self.display_output("Error: Could not process speech. Check your internet connection.\n")
+                        self.display_output("Error: Could not process speech. Check your internet connection. Restart Code with AI once internet is available\n\n")
+                        self.disableConsole()
+                        return
                     except Exception as e:
-                        print(f"An unexpected error occurred: {e}")
-                self.display_output("Speech input thread terminated.\n")
-
+                        pass
+                        # print(f"An unexpected error occurred: {e}")
         # Run the speech listening function in a separate thread
         threading.Thread(target=listen_for_speech, daemon=True).start()
 
@@ -422,18 +424,40 @@ class AIJavaProcessInterface:
             self.input_entry.delete(0, "end")
             self.display_output(">> " + user_input + "\n")
 
+            # Check for "stop" command
             if user_input.lower() == "stop":
-                self.display_output("Listening stopped.\n")
+                self.display_output("Listening stopped.\n\n")
                 self.stop_event.set()
                 return
-    
+
         prompt = "This is my prompt:\n" + user_input + instructions
 
-        # Send the message and process the response
-        response = chat_session.send_message(prompt).text + '\n'
-        response = response.replace("```cpp", "").replace("```", "")
+        # Process the response in a separate thread
+        def process_response():
+            if self.stop_ai.is_set():
+                return  # Do nothing if stop_ai is set
 
-        if response.startswith("Error"):
-            self.display_output(response)
-        else:
-            self.IDE.insertTextToScroll(response)
+            try:
+                self.display_output("Generating response...\n")
+                self.disableConsole()
+                response = chat_session.send_message(prompt).text + '\n'
+                while(not response):
+                    print("looping")
+                    response = chat_session.send_message(prompt).text + '\n'
+                response = response.replace("```cpp", "").replace("```", "")
+                index = index = response.find("// AI Generated Code")
+                if index != -1:
+                    response = response[index:]
+
+                if response.startswith("Error"):
+                    self.display_output(response)
+                else:
+                    self.IDE.insertTextToScroll(response)
+                    self.display_output("Response generated.\n\n")
+                self.enableConsole()
+            except Exception as e:
+                self.display_output(f"Error: {e}")
+
+        # Run the response processing in a thread to avoid UI blocking
+        response_thread = threading.Thread(target=process_response, daemon = True)
+        response_thread.start()

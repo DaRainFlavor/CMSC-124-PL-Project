@@ -45,8 +45,8 @@ class IDE():
     window_height = 400  # You can adjust this as needed
 
     # Calculate the x and y coordinates to center the window
-    x = (screen_width // 2) - (window_width // 2)
-    y = (screen_height // 2) - (window_height // 2)
+    x = (screen_width - window_width) // 2  # Adjusted to ensure correct centering
+    y = (screen_height - window_height) // 2  # Adjusted to ensure correct centering
 
     # Set the window size and position it at the calculated coordinates
     self.root.geometry(f"{window_width}x{window_height}+{x}+{y}")
@@ -431,6 +431,7 @@ class IDE():
   def close_ai(self):
     try:
       self.ai.stop_event.set()  # Signal thread to stop
+      self.ai.stop_ai.set()
       self.clear(self.ai_frame)
       self.ai_frame.destroy()
     except Exception as e:
@@ -523,7 +524,7 @@ class IDE():
     # self.terminal.grid(row=1, column=0, sticky='nsew')
     # self.terminal.insert("1.0", "Compiling...")
     
-    self.ai = AIJavaProcessInterface(self.ai_frame, self)
+    self.ai = AIInterface(self.ai_frame, self)
     # self.ai.start_java_process(self.filepath)
 
   def insertTextToScroll(self, text):

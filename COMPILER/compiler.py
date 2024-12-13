@@ -317,7 +317,8 @@ class Compiler:
     state = 0
     lexeme = ""
     withTransition = True #becomes false when there is no state transition
-    while self.idx < len(self.code) and self.code[self.idx] not in stop_chars and self.code[self.idx].isalpha():
+    while self.idx < len(self.code) and self.code[self.idx] not in stop_chars and (self.code[self.idx].isalpha() or self.code[self.idx] == "'"):
+      print("loop")
       current = self.code[self.idx]
       lexeme+=current
       
@@ -328,10 +329,12 @@ class Compiler:
       else:
         withTransition = False
         break
-    # print(f"lexeme: {lexeme}")
+    print(f"lexeme: {lexeme}")
     # print(withTransition)
-    # print(state)
-    # print(f"curr: {self.code[self.idx]}")
+    print(f"state: {state}")
+    print(f"curr: {self.code[self.idx]}")
+    if("'" == self.code[self.idx]): print("similar")
+    else: print("Not similar")
     # print(self.code[self.idx] == "\"")
     if(self.idx<len(self.code) and self.code[self.idx] == '§'):
       self.debugger(2)
@@ -1103,6 +1106,7 @@ class Compiler:
     elif self.currentToken == "IT'S":
       self.match("IT'S")
       self.match("GIVING")
+      print("should end")
       self.translateReturn()
     elif self.currentToken == 'SEMICOLON':
       self.match('SEMICOLON')
