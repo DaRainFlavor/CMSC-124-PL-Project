@@ -81,7 +81,7 @@ class JavaProcessInterface:
                 if ((not c and mips_code[0] == '§') or  (c and not c.success)):
                     end_time = time.time()
                     elapsed_time = end_time - self.startTime  # Calculate the time difference
-                    self.display_output(f"\nProgram has ended in {elapsed_time:.2f} seconds.")
+                    self.display_output(f"\n\n=== Program has ended in {elapsed_time:.2f} seconds. ===")
                     # self.disableConsole()
                     if mips_code and mips_code[0] == '§': return mips_code
                     return result
@@ -91,7 +91,9 @@ class JavaProcessInterface:
                 else:
                     content = c.getFinalMIPS()
                 # print(f"content: {content}")
-
+            
+            # print("\n\nThis\n")
+            # print(content)
             # Write the content to a temporary file
             with tempfile.NamedTemporaryFile(delete=False, suffix=".s") as temp_file:
                 temp_file.write(content.encode('utf-8'))
@@ -114,7 +116,7 @@ class JavaProcessInterface:
             self.display_output(f"What the sigma: '§'")
             end_time = time.time()
             elapsed_time = end_time - self.startTime  # Calculate the time difference
-            self.display_output(f"\nProgram has ended in {elapsed_time:.2f} seconds.")
+            self.display_output(f"\n\n=== Program has ended in {elapsed_time:.2f} seconds. ===")
 
 
     def clear_output(self):
@@ -154,13 +156,13 @@ class JavaProcessInterface:
                     char = self.process.stdout.read(1)    
                     end_time = time.time()
                     elapsed_time = end_time - self.startTime  # Calculate the time difference
-                    self.display_output(f"\nProgram has ended in {elapsed_time:.2f} seconds.")
+                    self.display_output(f"\n\n=== Program has ended in {elapsed_time:.2f} seconds. ===")
                     return
                 if char == "2":
                     # self.disableConsole()
                     end_time = time.time()
                     elapsed_time = end_time - self.startTime  # Calculate the time difference
-                    self.display_output(f"\nDivision by zero occured.\nProgram has ended in {elapsed_time:.2f} seconds.")
+                    self.display_output(f"\nDivision by zero occured.\n\n=== Program has ended in {elapsed_time:.2f} seconds. ===")
                     return
         
         if flag:

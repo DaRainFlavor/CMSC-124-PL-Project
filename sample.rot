@@ -1,0 +1,40 @@
+clout firstNumber, secondNumber, operation, result;
+
+yap<<"Enter first number: ";
+spill>>firstNumber;
+
+yap<<"Enter second number: ";
+spill>>secondNumber;
+
+yap<<
+"OPERATION OPTIONS
+          [1] : Addition
+          [2] : Subtraction
+          [3] : Multiplication
+          [4] : Division
+
+Enter choice: ";
+
+spill>>operation;
+
+let him cook (operation == 1){
+	result = firstNumber+secondNumber;
+	yap<<"The sum of "<<firstNumber<<" and "<<secondNumber<<" is "<<result<<"."<<slay;
+}
+what if (operation == 2){
+	result = firstNumber-secondNumber;
+	yap<<"The difference of "<<firstNumber<<" and "<<secondNumber<<" is "<<result<<"."<<slay;
+}
+what if (operation == 3){
+	result = firstNumber*secondNumber;
+	yap<<"The product of "<<firstNumber<<" and "<<secondNumber<<" is "<<result<<"."<<slay;
+}
+what if (operation == 4){
+	result = firstNumber/secondNumber;
+	yap<<"The quotient of "<<firstNumber<<" and "<<secondNumber<<" is "<<result<<"."<<slay;
+}
+cooked yap<<"Invalid operation"<<slay;
+
+yap<<"Value of result after operations: "<<result;
+
+it's giving;
