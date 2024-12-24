@@ -1,3 +1,7 @@
+Prerequisites
+1. Have Java installed on your computer. Go to https://www.java.com/download/ie_manual.jsp
+2. Double click Mars4_5.jar located in the Compiley Studio and BrainRot folder (you only have to do this once; you can close it after).
+
 Launching the Application
 To run Compiley Studio and create Brainrot files, locate and double-click on Compiley Studio.exe to launch the app.
 
@@ -10,4 +14,3 @@ Please note that the code contains hardcoded API key. Do not use the key in any 
 Stay Updated
 For the latest updates and to continue accessing full features of Compiley Studio, visit the project repository:
 https://github.com/DaRainFlavor/CMSC-124-PL-Project
-
