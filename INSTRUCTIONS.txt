@@ -9,7 +9,7 @@ Testing Basic Functionality
 To test the basic functionality, open the sample.rot file within the app. This file contains a sample Brainrot program for you to explore.
 
 Important Notice about API Key
-Please note that the code contains hardcoded API key. Do not use the key in any other application or context outside of Compiley Studio. The integration with 'Code with AI' will only be available until January 3, 2025, after which, the API key will be deactivated.
+It's no longer working. Create your own Gemini API key for free here -> https://aistudio.google.com/apikey
 
 Stay Updated
 For the latest updates and to continue accessing full features of Compiley Studio, visit the project repository:
