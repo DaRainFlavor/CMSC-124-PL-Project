@@ -13,7 +13,7 @@ There are two ways to get started with BrainRot:
 - Double-click Compiley Studio.exe to launch the IDE.
 - ✅ Done!
 
-### 2. Developer Setup (Using Python)
+### 2. Developer Setup
 If you want to run the project through your IDE, follow these steps:
 
 #### ✅ Requirements
